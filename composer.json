@@ -9,9 +9,14 @@
         "laravel/lumen-framework": "5.5.*",
         "vlucas/phpdotenv": "~2.2",
         "guzzlehttp/guzzle": "~6.0",
+        "php-http/message": "^1.6",
+        "php-http/guzzle6-adapter": "^1.1",
         "laravelcollective/html":"^5.4.0",
         "barryvdh/laravel-cors": "^0.11.0",
-        "illuminate/mail": "^5.5"
+        "illuminate/mail": "^5.5",
+        "nesbot/carbon": "^1.27",
+        "doctrine/dbal": "^2.5",
+        "league/flysystem": " ~1.0"
     },
     "require-dev": {
         "fzaninotto/faker": "~1.4",
