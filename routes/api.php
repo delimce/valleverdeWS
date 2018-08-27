@@ -14,3 +14,30 @@
 $router->get('/', function () use ($router) {
     return $router->app->version();
 });
+
+
+//initial
+$router->group(['namespace' => 'Api'], function () use ($router) {
+
+
+    //grupo zoom
+    $router->group(['prefix' => 'zoom'], function () use ($router) {
+        $router->get('/cities', 'ZoomController@getCities');
+        $router->get('/rateTypes', 'ZoomController@getRateTypes');
+        $router->put('/shippingRate', 'ZoomController@getShippingRate');
+
+    });
+
+    ///Ecommerce
+    $router->group(['prefix' => 'eco'], function () use ($router) {
+
+
+    });
+
+    ///syncs
+    $router->group(['prefix' => 'sync'], function () use ($router) {
+
+
+    });
+
+});
