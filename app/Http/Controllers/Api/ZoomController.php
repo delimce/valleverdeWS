@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use Laravel\Lumen\Routing\Controller as BaseController;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Request;
 use Validator;
 use Cache;
 
@@ -25,7 +26,7 @@ class ZoomController extends BaseController
             // Base URI is used with relative requests
             'base_uri' => $this->zoom_url,
             // You can set any number of default request options.
-            'timeout'  => 8.0,
+            'timeout' => 8.0,
         ]);
     }
 
@@ -40,9 +41,9 @@ class ZoomController extends BaseController
 
             $params = array("cod" => "nacional");
 
-            $response = $this->client->request('POST', 'getCiudades',[
+            $response = $this->client->request('POST', 'getCiudades', [
                 'form_params' => $params
-                ]);
+            ]);
 
             $data = $response->getBody();
 
@@ -60,7 +61,11 @@ class ZoomController extends BaseController
     }
 
 
-    public function getRateTypes(){
+    /**tarifas de grupo zoom
+     * @return mixed
+     */
+    public function getRateTypes()
+    {
 
         try {
 
@@ -82,10 +87,82 @@ class ZoomController extends BaseController
     }
 
 
+    /**
+     * calculo del tipo de tarifa Zoom
+     */
+    public function getShippingRate(Request $req)
+    {
+
+        $validator = Validator::make($req->all(), [
+            'quantity' => 'required',
+            'city' => 'required',
+            'weight' => 'required',
+            'cost' => 'required'
+        ], ['required' => 'El campo :attribute es requerido',
+            'min' => 'El campo :attribute debe ser mayor a :min',
+        ]);
+
+        if ($validator->fails()) {
+            $error = $validator->errors()->first();
+            return response()->json(['status' => 'error', 'message' => $error], 400);
+        }
 
 
+        ////tipo tarifa 2 envio nacional,
+        ////modalidad 2 puerta a puerta
+        ////pais 0 venezuela
 
 
+        try {
+
+            ///buscar codigo por ciudad y estado
+
+            $infoCity = Cache::remember('zoomCities', 720, function () { ///12 horas de cache
+
+                $params = array("cod" => "nacional");
+                $response = $this->client->request('POST', 'getCiudades', [
+                    'form_params' => $params
+                ]);
+
+                $data = $response->getBody();
+                return json_decode($data, true);
+
+            });
+
+
+            ////busqueda de la ciudad CARACAS
+            $CODORIGEN = 19;
+            $CODDESTINO = $infoCity[array_search(strtoupper($req->city), array_column($infoCity, 'nombre_ciudad'))];
+
+
+            $params = array("tipo_tarifa" => "2", "modalidad" => "2",
+                "ciudad_origen" => $CODORIGEN, "ciudad_destino" => $CODDESTINO["codciudad"], "oficina_destino" => 0, "cant_piezas" => $req->quantity, "peso" => $req->weight, "valor_mercancia" => $req->cost, "valor_declarado" => $req->cost);
+
+
+            $response = $this->client->request('POST', 'CalcularTarifa', [
+                'form_params' => $params
+            ]);
+
+            $data = json_decode($response->getBody(), true);
+
+
+            if (isset($data["errormessage"])) {
+
+                return response()->json(['status' => 'error', 'message' => $data["errormessage"]], 400);
+
+            } else {
+                return response()->json(['status' => 'ok', 'message' => $data]);
+            }
+
+
+        } catch (\Exception $e) {
+            // $errorMens = $e->errorInfo[2];
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+
+        }
+
+
+    }
 
 
 }

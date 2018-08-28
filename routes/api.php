@@ -24,7 +24,7 @@ $router->group(['namespace' => 'Api'], function () use ($router) {
     $router->group(['prefix' => 'zoom'], function () use ($router) {
         $router->get('/cities', 'ZoomController@getCities');
         $router->get('/rateTypes', 'ZoomController@getRateTypes');
-        $router->put('/shippingRate', 'ZoomController@getShippingRate');
+        $router->post('/shippingRate', 'ZoomController@getShippingRate');
 
     });
 
