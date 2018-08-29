@@ -14,7 +14,9 @@ class ZoomController extends BaseController
     //
     //  private $zoom_url = "http://sandbox.grupozoom.com/localhost/htdocs/internet/servicios/webservices";
     private $zoom_url = "http://webservices.grupozoom.com/internet/servicios/webservices/";
+    private $zoom_ge_url = "http://sandbox.grupozoom.com/proveedores/frontend/webservicesge/";
     private $client;
+    private $clientGE;
 
     /**
      * ZoomController constructor.
@@ -26,7 +28,14 @@ class ZoomController extends BaseController
             // Base URI is used with relative requests
             'base_uri' => $this->zoom_url,
             // You can set any number of default request options.
-            'timeout' => 8.0,
+            'timeout' => 10,
+        ]);
+
+        $this->clientGE = new Client([
+            // Base URI is used with relative requests
+            'base_uri' => $this->zoom_ge_url,
+            // You can set any number of default request options.
+            'timeout' => 10,
         ]);
     }
 
@@ -161,6 +170,16 @@ class ZoomController extends BaseController
 
         }
 
+
+    }
+
+
+    public function getStatus()
+    {
+
+        $response = $this->client->request('POST', 'getEstatus');
+        $data = json_decode($response->getBody(), true);
+        return response()->json(['status' => 'ok', 'data' => $data]);
 
     }
 
