@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Validator;
 use Cache;
 
+
 class ZoomController extends BaseController
 {
     //
@@ -17,6 +18,20 @@ class ZoomController extends BaseController
     private $zoom_ge_url = "http://sandbox.grupozoom.com/proveedores/frontend/webservicesge/";
     private $client;
     private $clientGE;
+
+
+    /******** datos del cliente
+     * Código de Cliente: 1
+     * Clave: 456789
+     * Token: Es generado a través del webservice generarToken(codigo_cliente)
+     * Frase Privada: 0uTjWGelDaE3Rh1HX5vF
+     */
+
+    private $client_code = 1;
+    private $client_pass = 456789;
+    private $client_token = '';
+    private $client_key = '0uTjWGelDaE3Rh1HX5vF';
+
 
     /**
      * ZoomController constructor.
@@ -180,6 +195,39 @@ class ZoomController extends BaseController
         $response = $this->client->request('POST', 'getEstatus');
         $data = json_decode($response->getBody(), true);
         return response()->json(['status' => 'ok', 'data' => $data]);
+
+    }
+
+
+    /**************************************************************************
+     *************************************************************************** GUIA ELECTRONICA
+     ***************************************************************************
+     */
+
+
+    public function createGE(Request $req)
+    {
+
+
+        ///getting token
+
+        $this->client_token = Cache::remember('zoomToken', 9, function () { ///9 minutos de cache
+
+            $params = array("codigo_cliente" => $this->client_code, "clave" => $this->client_pass);
+            $response = $this->clientGE->request('POST', 'generarToken', [
+                'form_params' => $params
+            ]);
+
+            $data = json_decode($response->getBody(), true);
+            return $data["token"];
+
+        });
+
+
+
+        $cert = zoomCert($this->client_code,$this->client_pass,$this->client_token,$this->client_key);
+
+
 
     }
 
