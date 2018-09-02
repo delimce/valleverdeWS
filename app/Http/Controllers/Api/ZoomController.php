@@ -15,6 +15,7 @@ class ZoomController extends BaseController
     //
     //  private $zoom_url = "http://sandbox.grupozoom.com/localhost/htdocs/internet/servicios/webservices";
     private $zoom_url = "http://webservices.grupozoom.com/internet/servicios/webservices/";
+   // private $zoom_ge_url =  "https://ge.grupozoom.com/webservicesge/";
     private $zoom_ge_url = "http://sandbox.grupozoom.com/proveedores/frontend/webservicesge/";
     private $client;
     private $clientGE;
@@ -28,7 +29,7 @@ class ZoomController extends BaseController
      */
 
     private $client_code = 1;
-    private $client_pass = 456789;
+    private $client_pass = '456789';
     private $client_token = '';
     private $client_key = '0uTjWGelDaE3Rh1HX5vF';
 
@@ -64,7 +65,6 @@ class ZoomController extends BaseController
         try {
 
             $params = array("cod" => "nacional");
-
             $response = $this->client->request('POST', 'getCiudades', [
                 'form_params' => $params
             ]);
@@ -81,7 +81,6 @@ class ZoomController extends BaseController
 
         }
 
-
     }
 
 
@@ -93,13 +92,10 @@ class ZoomController extends BaseController
 
         try {
 
-
             $response = $this->client->request('POST', 'getTipoTarifa');
-
             $data = $response->getBody();
 
             return response()->json(['status' => 'ok', 'data' => json_decode($data, true)]);
-
 
         } catch (\Exception $e) {
 
@@ -169,7 +165,6 @@ class ZoomController extends BaseController
 
             $data = json_decode($response->getBody(), true);
 
-
             if (isset($data["errormessage"])) {
 
                 return response()->json(['status' => 'error', 'message' => $data["errormessage"]], 400);
@@ -199,15 +194,30 @@ class ZoomController extends BaseController
     }
 
 
+    public function getClientServices()
+    {
+
+        $params = array("codigo_cliente" => $this->client_code, "clave_acceso" => $this->client_pass);
+        $response = $this->clientGE->request('POST', 'getServiciosCliente', [
+            'form_params' => $params
+        ]);
+
+        $data = json_decode($response->getBody(), true);
+
+        print_r($data);
+
+        // return $data["token"];
+
+    }
+
+
     /**************************************************************************
      *************************************************************************** GUIA ELECTRONICA
      ***************************************************************************
      */
 
-
     public function createGE(Request $req)
     {
-
 
         ///getting token
 
@@ -224,9 +234,9 @@ class ZoomController extends BaseController
         });
 
 
+        echo $this->client_token;
 
-        $cert = zoomCert($this->client_code,$this->client_pass,$this->client_token,$this->client_key);
-
+        //  $cert = zoomCert($this->client_code,$this->client_pass,$this->client_token,$this->client_key);
 
 
     }

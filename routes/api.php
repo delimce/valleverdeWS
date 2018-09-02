@@ -26,6 +26,7 @@ $router->group(['namespace' => 'Api'], function () use ($router) {
         $router->get('/rateTypes', 'ZoomController@getRateTypes');
         $router->post('/shippingRate', 'ZoomController@getShippingRate');
         $router->get('/status', 'ZoomController@getStatus');
+        $router->get('/services', 'ZoomController@getClientServices');
         $router->get('/createShipping', 'ZoomController@createGE');
     });
 
