@@ -32,7 +32,7 @@ $router->group(['namespace' => 'Api'], function () use ($router) {
 
     ///Ecommerce
     $router->group(['prefix' => 'eco'], function () use ($router) {
-
+        $router->put('/payment', 'EcommerceController@setPayment');
 
     });
 
