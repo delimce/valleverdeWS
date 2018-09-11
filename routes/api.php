@@ -30,9 +30,9 @@ $router->group(['namespace' => 'Api'], function () use ($router) {
         $router->get('/createShipping', 'ZoomController@createGE');
     });
 
-    ///Ecommerce
-    $router->group(['prefix' => 'eco'], function () use ($router) {
-        $router->put('/payment', 'EcommerceController@setPayment');
+    ///Orders
+    $router->group(['prefix' => 'order'], function () use ($router) {
+        $router->post('/payment', 'OrderController@addPayment');
 
     });
 
