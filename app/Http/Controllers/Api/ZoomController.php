@@ -219,7 +219,60 @@ class ZoomController extends BaseController
 
     public function createGE(Request $req)
     {
+
+        $validator = Validator::make($req->all(), [
+            'orderId' => 'required',
+            'customerId' => 'required',
+            'cost' => 'required',
+        ], ['required' => 'El campo :attribute es requerido',
+        ]);
+
+        if ($validator->fails()) {
+            $error = $validator->errors()->first();
+            return response()->json(['status' => 'error', 'message' => $error], 400);
+        }
+
+
         print  $this->client_cert = $this->getZoomCert();
+
+        $params = array("codigo_cliente" => $this->client_code,
+            "clave_acceso" => $this->client_pass,
+            "certificado" => $this->client_cert,
+            "codservicio" => "71", //guia GUIA PREPAGADA CARGA DIEZ KILOS
+            "consignacion" => "t", //Enviar el valor 't' para indicar que el servicio a utilizar es a consignación. Solo aplica para la Familia Prepagada.
+            "contacto_remitente" => "", //Persona contacto del Remitente del Envío.
+            "ciudad_remitente" => "", //Código de la Ciudad del Remitente.
+            "municipio_remitente" => "",
+            "parroquia_remitente" => "",
+            "zona_postal_remitente" => "",
+            "telefono_remitente" => "",
+            "direccion_remitente" => "",
+            "inmueble_remitente" => "",
+            "retirar_oficina" => null,
+            "codigo_ciudad_destino" => "",
+            "municipio_destino" => "",
+            "parroquia_destino" => "",
+            "zona_postal_destino" => "",
+            "codigo_oficina_destino" => "",
+            "destinatario" => "",
+            "contacto_destino" => "",
+            "cirif_destino" => "",
+            "telefono_destino" => "",
+            "direccion_destino" => "",
+            "inmueble_destino" => "",
+            "siglas_casillero" => "",
+            "codigo_casillero" => "",
+            "descripcion_contenido" => "",
+            "referencia" => null,
+            "numero_piezas" => "",
+            "peso_bruto" => "",
+            "tipo_envio" => "M", //'M' para MERCANCIA. Este valor es suministrado
+            "valor_declarado" => null,
+            "modalidad_cod" => null,
+            "valor_mercancia" => "",
+            "seguro" => null,
+            "celular" => null
+        );
 
     }
 
