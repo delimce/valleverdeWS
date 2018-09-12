@@ -223,6 +223,8 @@ class ZoomController extends BaseController
         $validator = Validator::make($req->all(), [
             'orderId' => 'required',
             'customerId' => 'required',
+            'quantity' => 'required',
+            'weight' => 'required',
             'cost' => 'required',
         ], ['required' => 'El campo :attribute es requerido',
         ]);
@@ -264,12 +266,12 @@ class ZoomController extends BaseController
             "codigo_casillero" => "",
             "descripcion_contenido" => "",
             "referencia" => null,
-            "numero_piezas" => "",
-            "peso_bruto" => "",
+            "numero_piezas" => $req->input("quantity"),
+            "peso_bruto" => $req->input("weight"),
             "tipo_envio" => "M", //'M' para MERCANCIA. Este valor es suministrado
             "valor_declarado" => null,
             "modalidad_cod" => null,
-            "valor_mercancia" => "",
+            "valor_mercancia" => $req->input("cost"),
             "seguro" => null,
             "celular" => null
         );
