@@ -15,7 +15,7 @@ class ZoomController extends BaseController
     //
     //  private $zoom_url = "http://sandbox.grupozoom.com/localhost/htdocs/internet/servicios/webservices";
     private $zoom_url = "http://webservices.grupozoom.com/internet/servicios/webservices/";
-   // private $zoom_ge_url =  "https://ge.grupozoom.com/webservicesge/";
+    // private $zoom_ge_url =  "https://ge.grupozoom.com/webservicesge/";
     private $zoom_ge_url = "http://sandbox.grupozoom.com/proveedores/frontend/webservicesge/";
     private $client;
     private $clientGE;
@@ -32,6 +32,7 @@ class ZoomController extends BaseController
     private $client_pass = '456789';
     private $client_token = '';
     private $client_key = '0uTjWGelDaE3Rh1HX5vF';
+    private $client_cert;
 
 
     /**
@@ -218,27 +219,43 @@ class ZoomController extends BaseController
 
     public function createGE(Request $req)
     {
+        print  $this->client_cert = $this->getZoomCert();
 
+    }
+
+    private function getZoomToken()
+    {
         ///getting token
+        $params = array("codigo_cliente" => $this->client_code, "clave" => $this->client_pass);
+        $response = $this->clientGE->request('POST', 'generarToken', [
+            'form_params' => $params
+        ]);
+        $result = json_decode($response->getBody(), true);
+        return $result['token'];
+    }
 
-        $this->client_token = Cache::remember('zoomToken', 9, function () { ///9 minutos de cache
+    private function getZoomCert()
+    {
+        ///getting token
+        $this->client_token = $this->getZoomToken();
+        ///getting cert
+        $params = array("codigo_cliente" => $this->client_code, "token" => $this->client_token);
+        $response = $this->clientGE->request('POST', 'updatesTokens', [
+            'form_params' => $params
+        ]);
 
-            $params = array("codigo_cliente" => $this->client_code, "clave" => $this->client_pass);
-            $response = $this->clientGE->request('POST', 'generarToken', [
-                'form_params' => $params
-            ]);
+        $getresponse = json_decode($response->getBody(), true);
 
-            $data = json_decode($response->getBody(), true);
-            return $data["token"];
+        if ($getresponse == 'tokenupd') {
+            ob_end_clean();
+            $clave = md5($this->client_pass);
+            $cert = crypt($this->client_code . $clave . $this->client_token, "$1$" . $this->client_key);
+            return $cert;
 
-        });
-
-
-        echo $this->client_token;
-
-        //  $cert = zoomCert($this->client_code,$this->client_pass,$this->client_token,$this->client_key);
-
-
+        } else {
+            ob_end_clean();
+            return response()->json(['status' => 'error', 'message' => "Error al Obtener el Certificado"], 500);
+        }
     }
 
 
