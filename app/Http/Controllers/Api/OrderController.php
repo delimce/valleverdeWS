@@ -84,7 +84,7 @@ class OrderController extends BaseController
             /////actualizando el estatus de la orden
 
             $orden = Order::findOrFail($req->orderId);
-            $orden->order_status_id = 2;
+            $orden->order_status_id = 9;
             $orden->save();
 
             //todo: envio de correo reporte de pago, definir metodo
