@@ -237,7 +237,8 @@ class ZoomController extends BaseController
 
         print  $this->client_cert = $this->getZoomCert();
 
-        $params = array("codigo_cliente" => $this->client_code,
+        $params = array(
+            "codigo_cliente" => $this->client_code,
             "clave_acceso" => $this->client_pass,
             "certificado" => $this->client_cert,
             "codservicio" => "71", //guia GUIA PREPAGADA CARGA DIEZ KILOS

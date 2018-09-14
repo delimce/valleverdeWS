@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\Order\Order;
+use App\Models\Order\OrderPayment;
+use App\Models\Order\OrderHistory;
 use Laravel\Lumen\Routing\Controller as BaseController;
 use DB;
 use Carbon\Carbon;
@@ -13,6 +16,14 @@ class OrderController extends BaseController
 {
     //
 
+    public function getOrderById($order_id)
+    {
+        $order = Order::findOrFail($order_id);
+
+        return response()->json(['status' => 'ok', 'order' => $order]);
+    }
+
+
     public function addPayment(Request $req)
     {
 
@@ -22,9 +33,10 @@ class OrderController extends BaseController
             'payment_method_id' => 'required',
             'bank_id_destino' => 'required',
             'reference' => 'required',
-            'date' => 'required',
+            'date' => 'required|date',
             'amount' => 'required',
         ], ['required' => 'El campo :attribute es requerido',
+            'date' => 'El campo :attribute no es valido',
         ]);
 
         if ($validator->fails()) {
@@ -75,7 +87,7 @@ class OrderController extends BaseController
             $orden->order_status_id = 2;
             $orden->save();
 
-
+            //todo: envio de correo reporte de pago, definir metodo
             //  $this->sendEmailReportado($req->customerId, $req->orderId); ///enviando email para el cliente
 
             DB::commit();

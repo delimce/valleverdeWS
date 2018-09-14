@@ -33,6 +33,7 @@ $router->group(['namespace' => 'Api'], function () use ($router) {
     ///Orders
     $router->group(['prefix' => 'order'], function () use ($router) {
         $router->post('/payment', 'OrderController@addPayment');
+        $router->get('/{order_id}', 'OrderController@getOrderById');
 
     });
 

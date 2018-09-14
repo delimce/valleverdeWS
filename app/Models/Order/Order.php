@@ -9,12 +9,21 @@
 namespace App\Models\Order;
 use Illuminate\Database\Eloquent\Model;
 
-class OrderPayment  extends Model
+class Order  extends Model
 {
 
     protected $table = "oc_order";
     protected $primaryKey = 'order_id';
     public $timestamps = false;
 
+    ///foreing key
+    public function customer()
+    {
+        return $this->belongsTo('App\Models\Customer\Customer','customer_id');
+    }
+
+    public function history() {
+        return $this->hasMany('App\Models\Order\OrderHistory', 'order_id');
+    }
 
 }
