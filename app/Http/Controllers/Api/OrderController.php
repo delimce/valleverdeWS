@@ -73,7 +73,7 @@ class OrderController extends BaseController
 
             $history = new OrderHistory();
             $history->order_id = $req->orderId;
-            $history->order_status_id = 2;
+            $history->order_status_id = 9; //reportado
             $history->notify = 1;
             if ($req->has("comments"))
                 $history->comment = $req->comments;
