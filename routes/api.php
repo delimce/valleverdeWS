@@ -23,11 +23,15 @@ $router->group(['namespace' => 'Api'], function () use ($router) {
     //grupo zoom
     $router->group(['prefix' => 'zoom'], function () use ($router) {
         $router->get('/cities', 'ZoomController@getCities');
+        $router->get('/districts/{city_id}', 'ZoomController@getDistricts');
+        $router->get('/parishes', 'ZoomController@getParishes');
+        $router->get('/offices', 'ZoomController@getOffices');
         $router->get('/rateTypes', 'ZoomController@getRateTypes');
         $router->post('/shippingRate', 'ZoomController@getShippingRate');
         $router->get('/status', 'ZoomController@getStatus');
         $router->get('/services', 'ZoomController@getClientServices');
         $router->get('/createShipping', 'ZoomController@createGE');
+        $router->get('/shipping/{number}', 'ZoomController@getShipping');
     });
 
     ///Orders

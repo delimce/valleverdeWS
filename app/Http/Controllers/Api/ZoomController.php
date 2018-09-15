@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\Setting;
 use Laravel\Lumen\Routing\Controller as BaseController;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Log;
@@ -33,6 +34,7 @@ class ZoomController extends BaseController
     private $client_token = '';
     private $client_key = '0uTjWGelDaE3Rh1HX5vF';
     private $client_cert;
+    private $client_shipping;
 
 
     /**
@@ -41,18 +43,30 @@ class ZoomController extends BaseController
      */
     public function __construct()
     {
+
+        $settings = Setting::where("code", "shipping_zoom")->get();
+        $settings->each(function ($item) {
+            if ($item->key == "shipping_zoom_user" && !empty($item->value))
+                $this->client_code = $item->value;
+            if ($item->key == "shipping_zoom_password" && !empty($item->value))
+                $this->client_pass = $item->value;
+            if ($item->key == "shipping_zoom_key" && !empty($item->value))
+                $this->client_key = $item->value;
+
+        });
+
         $this->client = new Client([
             // Base URI is used with relative requests
             'base_uri' => $this->zoom_url,
             // You can set any number of default request options.
-            'timeout' => 10,
+            'timeout' => 12,
         ]);
 
         $this->clientGE = new Client([
             // Base URI is used with relative requests
             'base_uri' => $this->zoom_ge_url,
             // You can set any number of default request options.
-            'timeout' => 10,
+            'timeout' => 30,
         ]);
     }
 
@@ -64,24 +78,67 @@ class ZoomController extends BaseController
     {
 
         try {
-
             $params = array("cod" => "nacional");
             $response = $this->client->request('POST', 'getCiudades', [
                 'form_params' => $params
             ]);
 
             $data = $response->getBody();
-
             return response()->json(['status' => 'ok', 'data' => json_decode($data, true)]);
-
-
         } catch (\Exception $e) {
-
             Log::error($e); ///log del error
             return response()->json(['status' => 'error', 'message' => "Error en el servicio"], 500);
-
         }
 
+    }
+
+    public function getDistricts($city_id)
+    {
+        try {
+            $params = array("codciudad" => $city_id);
+            $response = $this->client->request('POST', 'getMunicipios', [
+                'form_params' => $params
+            ]);
+
+            $data = $response->getBody();
+            return response()->json(['status' => 'ok', 'data' => json_decode($data, true)]);
+        } catch (\Exception $e) {
+            Log::error($e); ///log del error
+            return response()->json(['status' => 'error', 'message' => "Error en el servicio"], 500);
+        }
+    }
+
+
+    public function getParishes(Request $req)
+    {
+        try {
+            $params = $req->json()->all();
+            $response = $this->client->request('POST', 'getParroquias', [
+                'form_params' => $params
+            ]);
+
+            $data = $response->getBody();
+            return response()->json(['status' => 'ok', 'data' => json_decode($data, true)]);
+        } catch (\Exception $e) {
+            Log::error($e); ///log del error
+            return response()->json(['status' => 'error', 'message' => "Error en el servicio"], 500);
+        }
+    }
+
+    public function getOffices(Request $req)
+    {
+        try {
+            $params = $req->json()->all();
+            $response = $this->client->request('POST', 'getOficinasGE', [
+                'form_params' => $params
+            ]);
+
+            $data = $response->getBody();
+            return response()->json(['status' => 'ok', 'data' => json_decode($data, true)]);
+        } catch (\Exception $e) {
+            Log::error($e); ///log del error
+            return response()->json(['status' => 'error', 'message' => "Error en el servicio"], 500);
+        }
     }
 
 
@@ -205,9 +262,7 @@ class ZoomController extends BaseController
 
         $data = json_decode($response->getBody(), true);
 
-        print_r($data);
-
-        // return $data["token"];
+        return response()->json(['status' => 'ok', 'data' => $data]);
 
     }
 
@@ -217,15 +272,15 @@ class ZoomController extends BaseController
      ***************************************************************************
      */
 
+    /**create shipping
+     * @param Request $req
+     * @return mixed
+     */
     public function createGE(Request $req)
     {
 
         $validator = Validator::make($req->all(), [
             'orderId' => 'required',
-            'customerId' => 'required',
-            'quantity' => 'required',
-            'weight' => 'required',
-            'cost' => 'required',
         ], ['required' => 'El campo :attribute es requerido',
         ]);
 
@@ -235,48 +290,73 @@ class ZoomController extends BaseController
         }
 
 
-        print  $this->client_cert = $this->getZoomCert();
+        try {
 
-        $params = array(
-            "codigo_cliente" => $this->client_code,
-            "clave_acceso" => $this->client_pass,
-            "certificado" => $this->client_cert,
-            "codservicio" => "71", //guia GUIA PREPAGADA CARGA DIEZ KILOS
-            "consignacion" => "t", //Enviar el valor 't' para indicar que el servicio a utilizar es a consignación. Solo aplica para la Familia Prepagada.
-            "contacto_remitente" => "", //Persona contacto del Remitente del Envío.
-            "ciudad_remitente" => "", //Código de la Ciudad del Remitente.
-            "municipio_remitente" => "",
-            "parroquia_remitente" => "",
-            "zona_postal_remitente" => "",
-            "telefono_remitente" => "",
-            "direccion_remitente" => "",
-            "inmueble_remitente" => "",
-            "retirar_oficina" => null,
-            "codigo_ciudad_destino" => "",
-            "municipio_destino" => "",
-            "parroquia_destino" => "",
-            "zona_postal_destino" => "",
-            "codigo_oficina_destino" => "",
-            "destinatario" => "",
-            "contacto_destino" => "",
-            "cirif_destino" => "",
-            "telefono_destino" => "",
-            "direccion_destino" => "",
-            "inmueble_destino" => "",
-            "siglas_casillero" => "",
-            "codigo_casillero" => "",
-            "descripcion_contenido" => "",
-            "referencia" => null,
-            "numero_piezas" => $req->input("quantity"),
-            "peso_bruto" => $req->input("weight"),
-            "tipo_envio" => "M", //'M' para MERCANCIA. Este valor es suministrado
-            "valor_declarado" => null,
-            "modalidad_cod" => null,
-            "valor_mercancia" => $req->input("cost"),
-            "seguro" => null,
-            "celular" => null
-        );
+            $this->client_cert = $this->getZoomCert();
 
+            $params = array(
+                "codigo_cliente" => $this->client_code,
+                "clave_acceso" => $this->client_pass,
+                "certificado" => $this->client_cert,
+                "codservicio" => "2", //guia GUIA PREPAGADA CARGA DIEZ KILOS
+                "consignacion" => "t", //Enviar el valor 't' para indicar que el servicio a utilizar es a consignación. Solo aplica para la Familia Prepagada.
+                "contacto_remitente" => "Gabriela Rivero", //Persona contacto del Remitente del Envío.
+                "ciudad_remitente" => "19", //Código de la Ciudad del Remitente. DISTRITO CAPITAL
+                "municipio_remitente" => "101", //LIBERTADOR
+                "parroquia_remitente" => "10121", //SUCRE, 10122 23 DE ENE
+                "zona_postal_remitente" => "1020", //SUCRE, 1030 23 DE ENE
+                "telefono_remitente" => "02124569876",
+                "direccion_remitente" => "catia",
+                "inmueble_remitente" => "edificio",
+                "retirar_oficina" => 0,
+                "codigo_ciudad_destino" => "19",
+                "municipio_destino" => "101",
+                "parroquia_destino" => "10122",
+                "zona_postal_destino" => "1030",
+                "codigo_oficina_destino" => "46", //ZOOM LA URBINA
+                "destinatario" => "alguien aqui",
+                "contacto_destino" => "alguien aqui",
+                "cirif_destino" => "j4234324",
+                "telefono_destino" => "0212345678",
+                "direccion_destino" => "catia bien adentro",
+                "inmueble_destino" => "quinta",
+                "siglas_casillero" => "CCS",
+                "codigo_casillero" => 0,
+                "descripcion_contenido" => "ZAPATOS",
+                "referencia" => "1234",
+                "numero_piezas" => 2,
+                "peso_bruto" => 2,
+                "tipo_envio" => "M", //'M' para MERCANCIA. Este valor es suministrado
+                "valor_declarado" => 500,
+                //  "modalidad_cod" => "",
+                "valor_mercancia" => 500
+            );
+
+
+            $response = $this->clientGE->request('POST', 'createShipment', [
+                'form_params' => $params
+            ]);
+            $result = json_decode($response->getBody(), true);
+            $this->client_shipping = $result['numguia'];
+            return $this->createPDF(); //PDF
+        } catch (\Exception $e) {
+            // $errorMens = $e->errorInfo[2];
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+
+        }
+
+
+    }
+
+
+    /**get shipping method
+     * @param $number
+     * @return mixed
+     */
+    public function getShipping($number)
+    {
+        $this->client_shipping = $number;
+        return $this->createPDF(); //PDF
     }
 
     private function getZoomToken()
@@ -311,6 +391,25 @@ class ZoomController extends BaseController
         } else {
             ob_end_clean();
             return response()->json(['status' => 'error', 'message' => "Error al Obtener el Certificado"], 500);
+        }
+    }
+
+    private function createPDF()
+    {
+        try {
+            $params = array("codigo_cliente" => $this->client_code, "clave" => $this->client_pass, "numero_guia" => $this->client_shipping);
+            $response = $this->clientGE->request('POST', 'generarPDF', [
+                'form_params' => $params
+            ]);
+
+            $result = json_decode($response->getBody(), true);
+            $data = array("number" => $this->client_shipping, "pdf" => $result['objetopdf']);
+            return response()->json(['status' => 'ok', 'data' => $data]);
+
+        } catch (\Exception $e) {
+            // $errorMens = $e->errorInfo[2];
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+
         }
     }
 
