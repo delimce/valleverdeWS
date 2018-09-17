@@ -10,6 +10,7 @@ namespace App\Models;
 
 
 use Illuminate\Database\Eloquent\Model;
+use DB;
 
 class Setting extends Model
 {
@@ -18,8 +19,25 @@ class Setting extends Model
     protected $primaryKey = 'setting_id';
     public $timestamps = false;
 
-    protected $visible = array('code','key','value'); ///only fields that return
+    protected $visible = array('code', 'key', 'value'); ///only fields that return
 
 
+    public function getContactInfo()
+    {
+        $info = DB::table('oc_setting')->whereIn('key',
+            ['config_telephone',
+                'config_email',
+                'config_address',
+                'config_name'])->get();
+
+        $data = array();
+        $info->each(function ($item, $key) use (&$data) {
+            $data[$item->key] = $item->value;
+        });
+
+        return $data;
+
+
+    }
 
 }

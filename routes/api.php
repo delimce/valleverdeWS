@@ -30,7 +30,7 @@ $router->group(['namespace' => 'Api'], function () use ($router) {
         $router->post('/shippingRate', 'ZoomController@getShippingRate');
         $router->get('/status', 'ZoomController@getStatus');
         $router->get('/services', 'ZoomController@getClientServices');
-        $router->get('/createShipping', 'ZoomController@createGE');
+        $router->post('/createShipping', 'ZoomController@createGE');
         $router->get('/shipping/{number}', 'ZoomController@getShipping');
     });
 

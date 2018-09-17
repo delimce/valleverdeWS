@@ -26,4 +26,8 @@ class Order  extends Model
         return $this->hasMany('App\Models\Order\OrderHistory', 'order_id');
     }
 
+    public function product() {
+        return $this->hasMany('App\Models\Order\OrderProduct', 'order_id');
+    }
+
 }

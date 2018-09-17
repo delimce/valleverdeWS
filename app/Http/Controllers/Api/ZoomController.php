@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\Setting;
+use App\Models\Order\Order;
 use Laravel\Lumen\Routing\Controller as BaseController;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Log;
@@ -289,8 +290,14 @@ class ZoomController extends BaseController
             return response()->json(['status' => 'error', 'message' => $error], 400);
         }
 
-
         try {
+
+            ///get order's info
+
+            $settings = new Setting();
+            $data = $settings->getContactInfo();
+
+            $order = Order::findOrFail($req->input('orderId'));
 
             $this->client_cert = $this->getZoomCert();
 
@@ -300,13 +307,13 @@ class ZoomController extends BaseController
                 "certificado" => $this->client_cert,
                 "codservicio" => "2", //guia GUIA PREPAGADA CARGA DIEZ KILOS
                 "consignacion" => "t", //Enviar el valor 't' para indicar que el servicio a utilizar es a consignación. Solo aplica para la Familia Prepagada.
-                "contacto_remitente" => "Gabriela Rivero", //Persona contacto del Remitente del Envío.
+                "contacto_remitente" => $data['config_name'], //Persona contacto del Remitente del Envío.
                 "ciudad_remitente" => "19", //Código de la Ciudad del Remitente. DISTRITO CAPITAL
                 "municipio_remitente" => "101", //LIBERTADOR
                 "parroquia_remitente" => "10121", //SUCRE, 10122 23 DE ENE
                 "zona_postal_remitente" => "1020", //SUCRE, 1030 23 DE ENE
-                "telefono_remitente" => "02124569876",
-                "direccion_remitente" => "catia",
+                "telefono_remitente" => $data['config_telephone'],
+                "direccion_remitente" => $data['config_address'],
                 "inmueble_remitente" => "edificio",
                 "retirar_oficina" => 0,
                 "codigo_ciudad_destino" => "19",
@@ -314,24 +321,25 @@ class ZoomController extends BaseController
                 "parroquia_destino" => "10122",
                 "zona_postal_destino" => "1030",
                 "codigo_oficina_destino" => "46", //ZOOM LA URBINA
-                "destinatario" => "alguien aqui",
-                "contacto_destino" => "alguien aqui",
-                "cirif_destino" => "j4234324",
-                "telefono_destino" => "0212345678",
-                "direccion_destino" => "catia bien adentro",
+                "destinatario" => $order->firstname.' '.$order->lastname,
+                "contacto_destino" => $order->shipping_firstname.' '.$order->shipping_lastname,
+                "cirif_destino" => $order->customer->rif,
+                "telefono_destino" => $order->telephone,
+                "direccion_destino" => $order->shipping_address_1,
                 "inmueble_destino" => "quinta",
                 "siglas_casillero" => "CCS",
                 "codigo_casillero" => 0,
-                "descripcion_contenido" => "ZAPATOS",
-                "referencia" => "1234",
-                "numero_piezas" => 2,
+                "descripcion_contenido" => "ZAPATOS PARA NIÑOS",
+                "referencia" => "pedido:".$order->order_id,
+                "numero_piezas" => $order->product()->count(),
                 "peso_bruto" => 2,
                 "tipo_envio" => "M", //'M' para MERCANCIA. Este valor es suministrado
-                "valor_declarado" => 500,
+                "valor_declarado" => number_format ( $order->total,2),
                 //  "modalidad_cod" => "",
-                "valor_mercancia" => 500
+                "valor_mercancia" => number_format ( $order->total,2)
             );
 
+          //  dd($params);
 
             $response = $this->clientGE->request('POST', 'createShipment', [
                 'form_params' => $params
