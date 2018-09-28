@@ -30,4 +30,8 @@ class Order  extends Model
         return $this->hasMany('App\Models\Order\OrderProduct', 'order_id');
     }
 
+    public function totals() {
+        return $this->hasMany('App\Models\Order\OrderTotal', 'order_id');
+    }
+
 }

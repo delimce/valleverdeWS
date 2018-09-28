@@ -71,6 +71,22 @@ class ZoomController extends BaseController
         ]);
     }
 
+    private function getZoomCities()
+    {
+        $infoCity = Cache::remember('zoomCities', 720, function () { ///12 horas de cache
+
+            $params = array("cod" => "nacional");
+            $response = $this->client->request('POST', 'getCiudades', [
+                'form_params' => $params
+            ]);
+            $data = $response->getBody();
+            return json_decode($data, true);
+
+        });
+
+        return $infoCity;
+    }
+
 
     /** ciudades de zoom
      * @return mixed
@@ -79,13 +95,8 @@ class ZoomController extends BaseController
     {
 
         try {
-            $params = array("cod" => "nacional");
-            $response = $this->client->request('POST', 'getCiudades', [
-                'form_params' => $params
-            ]);
-
-            $data = $response->getBody();
-            return response()->json(['status' => 'ok', 'data' => json_decode($data, true)]);
+            $cities = $this->getZoomCities();
+            return response()->json(['status' => 'ok', 'data' => $cities]);
         } catch (\Exception $e) {
             Log::error($e); ///log del error
             return response()->json(['status' => 'error', 'message' => "Error en el servicio"], 500);
@@ -195,28 +206,14 @@ class ZoomController extends BaseController
         try {
 
             ///buscar codigo por ciudad y estado
-
-            $infoCity = Cache::remember('zoomCities', 720, function () { ///12 horas de cache
-
-                $params = array("cod" => "nacional");
-                $response = $this->client->request('POST', 'getCiudades', [
-                    'form_params' => $params
-                ]);
-
-                $data = $response->getBody();
-                return json_decode($data, true);
-
-            });
-
+            $infoCity = $this->getZoomCities();
 
             ////busqueda de la ciudad CARACAS
             $CODORIGEN = 19;
             $CODDESTINO = $infoCity[array_search(strtoupper($req->city), array_column($infoCity, 'nombre_ciudad'))];
 
-
             $params = array("tipo_tarifa" => "2", "modalidad" => "2",
                 "ciudad_origen" => $CODORIGEN, "ciudad_destino" => $CODDESTINO["codciudad"], "oficina_destino" => 0, "cant_piezas" => $req->quantity, "peso" => $req->weight, "valor_mercancia" => $req->cost, "valor_declarado" => $req->cost);
-
 
             $response = $this->client->request('POST', 'CalcularTarifa', [
                 'form_params' => $params
@@ -232,9 +229,7 @@ class ZoomController extends BaseController
                 return response()->json(['status' => 'ok', 'message' => $data]);
             }
 
-
         } catch (\Exception $e) {
-            // $errorMens = $e->errorInfo[2];
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
 
         }
@@ -293,13 +288,14 @@ class ZoomController extends BaseController
         try {
 
             ///get order's info
-
             $settings = new Setting();
-            $data = $settings->getContactInfo();
-
+            $data = $settings->getContactInfo(); ///datos de la empresa valleverde
             $order = Order::findOrFail($req->input('orderId'));
-
+            $shipping = $order->totals()->whereCode("shipping")->first();
             $this->client_cert = $this->getZoomCert();
+            ///buscar codigo por ciudad y estado
+            $infoCity = $this->getZoomCities();
+            $city = $infoCity[array_search(strtoupper($order->shipping_city), array_column($infoCity, 'nombre_ciudad'))];
 
             $params = array(
                 "codigo_cliente" => $this->client_code,
@@ -310,34 +306,35 @@ class ZoomController extends BaseController
                 "contacto_remitente" => $data['config_name'], //Persona contacto del Remitente del Envío.
                 "ciudad_remitente" => "19", //Código de la Ciudad del Remitente. DISTRITO CAPITAL
                 "municipio_remitente" => "101", //LIBERTADOR
-                "parroquia_remitente" => "10121", //SUCRE, 10122 23 DE ENE
-                "zona_postal_remitente" => "1020", //SUCRE, 1030 23 DE ENE
+                "parroquia_remitente" => "10122", //SUCRE, 10122 23 DE ENE
+                "zona_postal_remitente" => "1030", //SUCRE, 1030
                 "telefono_remitente" => $data['config_telephone'],
                 "direccion_remitente" => $data['config_address'],
-                "inmueble_remitente" => "edificio",
+                "inmueble_remitente" => "Edificio",
                 "retirar_oficina" => 0,
-                "codigo_ciudad_destino" => "19",
-                "municipio_destino" => "101",
-                "parroquia_destino" => "10122",
-                "zona_postal_destino" => "1030",
-                "codigo_oficina_destino" => "46", //ZOOM LA URBINA
-                "destinatario" => $order->firstname.' '.$order->lastname,
-                "contacto_destino" => $order->shipping_firstname.' '.$order->shipping_lastname,
+                "codigo_ciudad_destino" => $city["codciudad"],
+                "municipio_destino" => "",
+                "parroquia_destino" => "",
+                "zona_postal_destino" => "",
+                "codigo_oficina_destino" => "", //ZOOM LA URBINA
+                "destinatario" => $order->firstname . ' ' . $order->lastname,
+                "contacto_destino" => $order->shipping_firstname . ' ' . $order->shipping_lastname,
                 "cirif_destino" => $order->customer->rif,
                 "telefono_destino" => $order->telephone,
                 "direccion_destino" => $order->shipping_address_1,
-                "inmueble_destino" => "quinta",
-                "siglas_casillero" => "CCS",
-                "codigo_casillero" => 0,
+                "inmueble_destino" => "Residencia",
+                "siglas_casillero" => "",
+                "codigo_casillero" => "",
                 "descripcion_contenido" => "ZAPATOS PARA NIÑOS",
-                "referencia" => "pedido:".$order->order_id,
-                "numero_piezas" => $order->product()->count(),
+                "referencia" => "pedido:" . $order->order_id,
+                "numero_piezas" => $order->product()->sum('quantity'),
                 "peso_bruto" => 2,
                 "tipo_envio" => "M", //'M' para MERCANCIA. Este valor es suministrado
-                "valor_declarado" => number_format ( $order->total,2),
+                "valor_declarado" => (round($shipping->value) == 0) ? number_format($order->total, 2) : number_format($shipping->value, 2),
                 //  "modalidad_cod" => "",
-                "valor_mercancia" => number_format ( $order->total,2)
+                "valor_mercancia" => 0
             );
+
 
           //  dd($params);
 
@@ -348,7 +345,6 @@ class ZoomController extends BaseController
             $this->client_shipping = $result['numguia'];
             return $this->createPDF(); //PDF
         } catch (\Exception $e) {
-            // $errorMens = $e->errorInfo[2];
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
 
         }
@@ -415,7 +411,6 @@ class ZoomController extends BaseController
             return response()->json(['status' => 'ok', 'data' => $data]);
 
         } catch (\Exception $e) {
-            // $errorMens = $e->errorInfo[2];
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
 
         }
