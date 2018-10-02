@@ -8,6 +8,7 @@
 
 namespace App\Models\Order;
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
 class Order  extends Model
 {
@@ -32,6 +33,10 @@ class Order  extends Model
 
     public function totals() {
         return $this->hasMany('App\Models\Order\OrderTotal', 'order_id');
+    }
+
+    public function date(){
+        return Carbon::parse($this->date_added)->format('Y-m-d');
     }
 
 }
