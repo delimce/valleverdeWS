@@ -27,16 +27,19 @@ class ProfitController extends BaseController
 
         $orders->each(function ($item) {
 
-            $orderDetail = array();
-            $orderDetail['order_id'] = $item->order_id;
-            $orderDetail['customer_rif'] = $item->customer->rif;
-            $prods = $item->product()->get();
-            $prods->each(function ($prod) use($orderDetail) {
-             print $orderDetail['order_id'].';'.$orderDetail['customer_rif'].';'; //order header
-             print $prod->order_id.';'.$prod->name.';'.$prod->quantity.';'.$prod->total.';'; //products detail
+            try{
+                $orderDetail = array();
+                $orderDetail['order_id'] = $item->order_id;
+                $orderDetail['customer_rif'] = $item->customer->rif;
+                $prods = $item->product()->get();
+                $prods->each(function ($prod) use($orderDetail) {
+                    print $orderDetail['order_id'].';'.$orderDetail['customer_rif'].';'; //order header
+                    print $prod->order_id.';'.$prod->name.';'.$prod->quantity.';'.$prod->total.';'; //products detail
+                });
 
-            });
-
+            }catch (\Exception $ex){
+               return true;
+            }
             print "\n";
 
         });
