@@ -153,6 +153,18 @@ class ZoomController extends BaseController
         }
     }
 
+    private function getOfficesGE($city_id)
+    {
+
+        $params = array("codigo_ciudad_destino" => $city_id, "modalidad_tarifa" => 2, "tipo_tarifa" => 2);
+        $response = $this->client->request('POST', 'getOficinasGE', [
+            'form_params' => $params
+        ]);
+
+        $data = $response->getBody();
+        return json_decode($data, true);
+    }
+
 
     /**tarifas de grupo zoom
      * @return mixed
@@ -296,6 +308,7 @@ class ZoomController extends BaseController
             ///buscar codigo por ciudad y estado
             $infoCity = $this->getZoomCities();
             $city = $infoCity[array_search(strtoupper($order->shipping_city), array_column($infoCity, 'nombre_ciudad'))];
+            $office = $this->getOfficesGE($city["codciudad"]);
 
             $params = array(
                 "codigo_cliente" => $this->client_code,
@@ -311,12 +324,12 @@ class ZoomController extends BaseController
                 "telefono_remitente" => $data['config_telephone'],
                 "direccion_remitente" => $data['config_address'],
                 "inmueble_remitente" => "Edificio",
-                "retirar_oficina" => 0,
+                "retirar_oficina" => "0",
                 "codigo_ciudad_destino" => $city["codciudad"],
                 "municipio_destino" => "",
                 "parroquia_destino" => "",
                 "zona_postal_destino" => "",
-                "codigo_oficina_destino" => "46", //ZOOM LA URBINA
+                "codigo_oficina_destino" => $office[0]['codoficina'], //OFICINA ZOOM
                 "destinatario" => $order->firstname . ' ' . $order->lastname,
                 "contacto_destino" => $order->shipping_firstname . ' ' . $order->shipping_lastname,
                 "cirif_destino" => $order->customer->rif,
@@ -336,7 +349,7 @@ class ZoomController extends BaseController
             );
 
 
-          //  dd($params);
+            //  dd($params);
 
             $response = $this->clientGE->request('POST', 'createShipment', [
                 'form_params' => $params
