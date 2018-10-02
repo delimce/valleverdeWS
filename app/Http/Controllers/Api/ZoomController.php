@@ -316,7 +316,7 @@ class ZoomController extends BaseController
                 "municipio_destino" => "",
                 "parroquia_destino" => "",
                 "zona_postal_destino" => "",
-                "codigo_oficina_destino" => "", //ZOOM LA URBINA
+                "codigo_oficina_destino" => "46", //ZOOM LA URBINA
                 "destinatario" => $order->firstname . ' ' . $order->lastname,
                 "contacto_destino" => $order->shipping_firstname . ' ' . $order->shipping_lastname,
                 "cirif_destino" => $order->customer->rif,

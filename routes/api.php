@@ -41,6 +41,13 @@ $router->group(['namespace' => 'Api'], function () use ($router) {
 
     });
 
+    //profit services
+    $router->group(['prefix' => 'profit'], function () use ($router) {
+        $router->get('/ordersPaid', 'ProfitController@getOrdersPaid');
+
+    });
+
+
     ///syncs
     $router->group(['prefix' => 'sync'], function () use ($router) {
 
