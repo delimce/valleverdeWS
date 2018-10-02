@@ -35,7 +35,7 @@ class ProfitController extends BaseController
                 $prods = $item->product()->get();
                 $prods->each(function ($prod) use($orderDetail) {
                     print $orderDetail['order_id'].';'. $orderDetail['order_date'].';'.$orderDetail['customer_rif'].';'; //order header
-                    print $prod->order_id.';'.$prod->sku.';'.$prod->quantity.';'.$prod->price.';'.$prod->quantity*$prod->price.';'; //products detail
+                    print $prod->sku.';'.$prod->quantity.';'.$prod->price.';'.$prod->quantity*$prod->price.';'; //products detail
                 });
 
             }catch (\Exception $ex){
