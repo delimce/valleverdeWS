@@ -303,6 +303,13 @@ class ZoomController extends BaseController
             $settings = new Setting();
             $data = $settings->getContactInfo(); ///datos de la empresa valleverde
             $order = Order::findOrFail($req->input('orderId'));
+            $myProds = $order->product()->get();
+            $orderWeight =0;
+             $myProds->each(function ($item) use(&$orderWeight) {
+                 $orderWeight+=$item->getWeightBySize();
+            });
+
+
             $shipping = $order->totals()->whereCode("shipping")->first();
             $this->client_cert = $this->getZoomCert();
             ///buscar codigo por ciudad y estado
@@ -341,7 +348,7 @@ class ZoomController extends BaseController
                 "descripcion_contenido" => "ZAPATOS PARA NIÑOS",
                 "referencia" => "pedido:" . $order->order_id,
                 "numero_piezas" => $order->product()->sum('quantity'),
-                "peso_bruto" => 2,
+                "peso_bruto" =>  $orderWeight,
                 "tipo_envio" => "M", //'M' para MERCANCIA. Este valor es suministrado
                 "valor_declarado" => (round($shipping->value) == 0) ? number_format($order->total, 2) : number_format($shipping->value, 2),
                 //  "modalidad_cod" => "",
@@ -349,7 +356,7 @@ class ZoomController extends BaseController
             );
 
 
-            //  dd($params);
+              dd($params);
 
             $response = $this->clientGE->request('POST', 'createShipment', [
                 'form_params' => $params
