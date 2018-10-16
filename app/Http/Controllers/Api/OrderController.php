@@ -18,9 +18,15 @@ class OrderController extends BaseController
 
     public function getOrderById($order_id)
     {
-        $order = Order::findOrFail($order_id);
+        $order = Order::whereOrderId($order_id)->with('product', 'customer', 'totals')->first();
 
         return response()->json(['status' => 'ok', 'order' => $order]);
+    }
+
+    public function getOrdersPaid()
+    {
+        $orders = Order::whereOrderStatusId(2)->with('product', 'customer', 'totals')->get();
+        return response()->json(['status' => 'ok', 'data' => $orders]);
     }
 
 
