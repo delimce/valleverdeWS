@@ -38,12 +38,20 @@ $router->group(['namespace' => 'Api'], function () use ($router) {
     $router->group(['prefix' => 'order'], function () use ($router) {
         $router->post('/payment', 'OrderController@addPayment');
         $router->get('/{order_id}', 'OrderController@getOrderById');
+        $router->get('/paid/all', 'OrderController@getOrdersPaid');
 
     });
 
     //profit services
     $router->group(['prefix' => 'profit'], function () use ($router) {
         $router->get('/ordersPaid', 'ProfitController@getOrdersPaid');
+
+    });
+
+    //products
+    $router->group(['prefix' => 'product'], function () use ($router) {
+        $router->get('/{productId}', 'StockController@getProduct');
+        $router->get('/sku/{sku}', 'StockController@getProductBySku');
 
     });
 
