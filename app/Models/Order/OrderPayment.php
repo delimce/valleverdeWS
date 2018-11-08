@@ -22,11 +22,5 @@ class OrderPayment  extends Model
         return $this->belongsTo('App\Models\Order\Order', 'order_id');
     }
 
-    ///foreing key
-    public function metodo()
-    {
-        return $this->belongsTo('App\Models\Order\PaymentMethod', 'payment_method_id');
-    }
-
 
 }
