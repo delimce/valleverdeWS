@@ -55,7 +55,7 @@ class ProfitController extends BaseController
             } catch (\Exception $ex) {
                 return true; //continue
             }
-            print "\n";
+            print "<br>";
 
         });
 
