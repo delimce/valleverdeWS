@@ -50,12 +50,13 @@ class ProfitController extends BaseController
                     print $orderDetail; //order header
                     print $prod->sku . ';' . $prod->quantity . ';' . number_format($prod->price, 2,'.', '') . ';' . number_format($prod->quantity * $prod->price, 2,'.', '') . ';'; //products detail
                     print $payment;
+                    print "<br>";
                 });
 
             } catch (\Exception $ex) {
+                Log::error($ex->getMessage());
                 return true; //continue
             }
-            print "<br>";
 
         });
 
