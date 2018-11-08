@@ -54,6 +54,7 @@ class ProfitController extends BaseController
                 });
 
             } catch (\Exception $ex) {
+                Log::error("Profit: error obteniendo orden:".$item->order_id);
                 Log::error($ex->getMessage());
                 return true; //continue
             }
