@@ -9,17 +9,23 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\Order\Order;
+use App\Models\Order\OrderHistory;
 use Laravel\Lumen\Routing\Controller as BaseController;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use Validator;
 use Cache;
+use DB;
+use Carbon\Carbon;
 
 
 class ProfitController extends BaseController
 {
 
+    /**
+     * baja las ordenes ya pagadas pendientes pro procesar
+     */
     public function getOrdersPaid()
     {
 
@@ -39,22 +45,22 @@ class ProfitController extends BaseController
                 ///totals
                 $totals = $item->totals()->orderBy('sort_order')->get();
                 $totals->each(function ($total) use (&$orderDetail) {
-                    if ($total->code == 'sub_total') $orderDetail .= number_format($total->value, 2,'.', '') . ';';
-                    if ($total->code == 'tax') $orderDetail .= number_format($total->value, 2,'.', '') . ';';
-                    if ($total->code == 'total') $orderDetail .= number_format($total->value, 2,'.', '') . ';';
+                    if ($total->code == 'sub_total') $orderDetail .= number_format($total->value, 2, '.', '') . ';';
+                    if ($total->code == 'tax') $orderDetail .= number_format($total->value, 2, '.', '') . ';';
+                    if ($total->code == 'total') $orderDetail .= number_format($total->value, 2, '.', '') . ';';
                 });
                 $payment = $item->paymentType();
                 ///product items
                 $prods = $item->product()->get();
-                $prods->each(function ($prod) use ($orderDetail,$payment) {
+                $prods->each(function ($prod) use ($orderDetail, $payment) {
                     print $orderDetail; //order header
-                    print $prod->sku . ';' . $prod->quantity . ';' . number_format($prod->price, 2,'.', '') . ';' . number_format($prod->quantity * $prod->price, 2,'.', '') . ';'; //products detail
+                    print $prod->sku . ';' . $prod->quantity . ';' . number_format($prod->price, 2, '.', '') . ';' . number_format($prod->quantity * $prod->price, 2, '.', '') . ';'; //products detail
                     print $payment;
                     print "\n";
                 });
 
             } catch (\Exception $ex) {
-                Log::error("Profit: error obteniendo orden:".$item->order_id);
+                Log::error("Profit: error obteniendo orden:" . $item->order_id);
                 Log::error($ex->getMessage());
                 return true; //continue
             }
@@ -62,6 +68,85 @@ class ProfitController extends BaseController
         });
 
 
+    }
+
+    /**marca las ordenes procesadas de profit
+     * @param $orders
+     * @param $docs
+     * @return
+     */
+    public function setOrderProcessed($orders, $docs)
+    {
+        $orders = explode(",", $orders);
+        $docs = explode(",", $docs);
+        $success = array();
+        DB::beginTransaction();
+        foreach ($orders as $i => $orderId) {
+            try {
+                $order = Order::whereOrderStatusId(2)->find($orderId);
+                if ($order != null) {
+                    $order->order_status_id = 15; //facturada
+                    $order->invoice_no = $docs[$i]; //nro factura
+                    $order->save();
+                    $history = new OrderHistory();
+                    $history->order_status_id = 15;
+                    $history->notify = 0;
+                    $history->comment = 'facturacion profit';
+                    $history->date_added = Carbon::now();
+                    $order->history()->save($history);
+                    $success[] = array("order" => $order->order_id, "processed" => true);
+                } else {
+                    $success[] = array("order" => $orderId, "processed" => false);
+                    continue;
+                }
+            } catch (\Exception $ex) {
+                Log::error("Profit: error actualizando orden:" . $orderId);
+                Log::error($ex->getMessage());
+                $success[] = array("order" => $orderId, "processed" => false);
+                continue; //continue
+            }
+        }
+        DB::commit();
+        return response()->json(['status' => 'ok', 'orders' => $success]);
+    }
+
+
+    /**
+     * @param $orders
+     * @return mixed
+     */
+    public function setOrderUnProcessed($orders)
+    {
+        $orders = explode(",", $orders);
+        $success = array();
+        DB::beginTransaction();
+        foreach ($orders as $i => $orderId) {
+            try {
+                $order = Order::whereOrderStatusId(15)->find($orderId);
+                if ($order != null) {
+                    $order->order_status_id = 2; //facturada
+                    $order->invoice_no = ''; //nro factura
+                    $order->save();
+                    $history = new OrderHistory();
+                    $history->order_status_id = 2;
+                    $history->notify = 0;
+                    $history->comment = 'restaurando factura profit';
+                    $history->date_added = Carbon::now();
+                    $order->history()->save($history);
+                    $success[] = array("order" => $order->order_id, "unprocessed" => true);
+                } else {
+                    $success[] = array("order" => $orderId, "unprocessed" => false);
+                    continue;
+                }
+            } catch (\Exception $ex) {
+                Log::error("Profit: error devolviendo estatus de orden:" . $orderId);
+                Log::error($ex->getMessage());
+                $success[] = array("order" => $orderId, "unprocessed" => false);
+                continue; //continue
+            }
+        }
+        DB::commit();
+        return response()->json(['status' => 'ok', 'orders' => $success]);
     }
 
 }

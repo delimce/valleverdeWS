@@ -56,15 +56,11 @@ class Order extends Model
         switch ($this->payment_code) {
             case 'instapago':
                 $payment = CredicardTransfer::whereOrderId($this->order_id)->orderby('id', 'DESC')->first();
-                $paymentData .= 'TARJ' . ';' . $payment->reference . ';' . $this->date() . ';' . '001' . ';' . number_format($payment->total, 2, '.', '') . ';';
+                $paymentData .= 'TARJ' . ';' . $payment->reference . ';' . $this->date() . ';' . 'TC' . ';' . number_format($payment->total, 2, '.', '') . ';';
                 break;
-
             case 'bank_transfer':
                 $payment = OrderPayment::whereOrderId($this->order_id)->orderby('payment_id', 'DESC')->first();
-                $paymentData .= ($payment->payment_method == 2) ? 'DEPO' : 'TRAN' . ';' . $payment->reference . ';' . $payment->date . ';' . '001' . ';' . number_format($payment->amount, 2, '.', '') . ';';
-                break;
-            default:
-                $paymentData .= ';;;;;';
+                $paymentData .= ($payment->payment_method == 2) ? 'DEPO' : 'TRAN' . ';' . $payment->reference . ';' . $payment->date . ';' . '0134' . ';' . number_format($payment->amount, 2, '.', '') . ';';
                 break;
         }
         return $paymentData;
