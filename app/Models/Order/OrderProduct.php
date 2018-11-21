@@ -24,6 +24,10 @@ class OrderProduct extends Model
         return $this->belongsTo('App\Models\Order\Order', 'order_id');
     }
 
+    public function stock(){
+        return $this->hasMany('App\Models\Product\Stock', 'sku', 'sku');
+    }
+
 
     public function getWeightBySize()
     {
