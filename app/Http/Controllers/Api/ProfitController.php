@@ -53,10 +53,15 @@ class ProfitController extends BaseController
                 ///product items
                 $prods = $item->product()->get();
                 $prods->each(function ($prod) use ($orderDetail, $payment) {
-                    print $orderDetail; //order header
-                    print $prod->sku . ';' . $prod->quantity . ';' . number_format($prod->price, 2, '.', '') . ';' . number_format($prod->quantity * $prod->price, 2, '.', '') . ';'; //products detail
-                    print $payment;
-                    print "\n";
+                    ///buscando cod de producto profit
+                    $profit = $prod->stock()->first()->cod;
+                    if ($profit) { ///el codigo existe en profit
+                        print $orderDetail; //order header
+                        print $profit . ';' . $prod->quantity . ';' . number_format($prod->price, 2, '.', '') . ';' . number_format($prod->quantity * $prod->price, 2, '.', '') . ';'; //products detail
+                        print $payment;
+                        print "\n";
+                    }
+
                 });
 
             } catch (\Exception $ex) {
