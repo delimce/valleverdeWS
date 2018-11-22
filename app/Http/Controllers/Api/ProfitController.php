@@ -10,6 +10,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\Order\Order;
 use App\Models\Order\OrderHistory;
+use App\Models\Order\OrderProduct;
 use Laravel\Lumen\Routing\Controller as BaseController;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Log;
@@ -42,9 +43,16 @@ class ProfitController extends BaseController
                 $orderDetail .= $item->customer->firstname . ' ' . $item->customer->lastname . ';';
                 $orderDetail .= $item->paymentAddress() . ';';
                 $orderDetail .= $item->customer->telephone . ';';
+                $shipping = null;
                 ///totals
                 $totals = $item->totals()->orderBy('sort_order')->get();
-                $totals->each(function ($total) use (&$orderDetail) {
+                $totals->each(function ($total) use (&$orderDetail, &$shipping) {
+                    if ($total->code == 'shipping') {
+                        $shipping = new OrderProduct();
+                        $shipping->price = number_format($total->value, 2, '.', '') . ';';
+                        $shipping->quantity = 1;
+                        $shipping->sku = 'codigo';
+                    }
                     if ($total->code == 'sub_total') $orderDetail .= number_format($total->value, 2, '.', '') . ';';
                     if ($total->code == 'tax') $orderDetail .= number_format($total->value, 2, '.', '') . ';';
                     if ($total->code == 'total') $orderDetail .= number_format($total->value, 2, '.', '') . ';';
@@ -52,6 +60,11 @@ class ProfitController extends BaseController
                 $payment = $item->paymentType();
                 ///product items
                 $prods = $item->product()->get();
+                ///revisando si existe item de envio
+                if($shipping){
+                    $prods->push($shipping);
+                }
+
                 $prods->each(function ($prod) use ($orderDetail, $payment) {
                     ///buscando cod de producto profit
                     $profit = $prod->stock()->first()->cod;
