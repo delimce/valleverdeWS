@@ -23,6 +23,7 @@ use Carbon\Carbon;
 
 class ProfitController extends BaseController
 {
+    static $SHIPPING_CODE = 'FLETE000000'; ///cod de flete en profit
 
     /**
      * baja las ordenes ya pagadas pendientes pro procesar
@@ -48,10 +49,11 @@ class ProfitController extends BaseController
                 $totals = $item->totals()->orderBy('sort_order')->get();
                 $totals->each(function ($total) use (&$orderDetail, &$shipping) {
                     if ($total->code == 'shipping') {
-                        $shipping = new OrderProduct();
-                        $shipping->price = number_format($total->value, 2, '.', '') . ';';
-                        $shipping->quantity = 1;
-                        $shipping->sku = 'codigo';
+                        $shipping = array(
+                            "quantity" => 1,
+                            "price" => number_format($total->value,
+                                2, '.', ''),
+                            "cod" => self::$SHIPPING_CODE);
                     }
                     if ($total->code == 'sub_total') $orderDetail .= number_format($total->value, 2, '.', '') . ';';
                     if ($total->code == 'tax') $orderDetail .= number_format($total->value, 2, '.', '') . ';';
@@ -60,11 +62,6 @@ class ProfitController extends BaseController
                 $payment = $item->paymentType();
                 ///product items
                 $prods = $item->product()->get();
-                ///revisando si existe item de envio
-                if($shipping){
-                    $prods->push($shipping);
-                }
-
                 $prods->each(function ($prod) use ($orderDetail, $payment) {
                     ///buscando cod de producto profit
                     $profit = $prod->stock()->first()->cod;
@@ -74,8 +71,15 @@ class ProfitController extends BaseController
                         print $payment;
                         print "\n";
                     }
-
                 });
+
+                ///revisando si existe item de envio
+                if ($shipping) {
+                    print $orderDetail; //order header
+                    print $shipping['cod'] . ';' . $shipping['quantity'] . ';' . number_format($shipping['price'], 2, '.', '') . ';' . number_format($shipping['quantity'] * $shipping['price'], 2, '.', '') . ';'; //products detail
+                    print $payment;
+                    print "\n";
+                }
 
             } catch (\Exception $ex) {
                 Log::error("Profit: error obteniendo orden:" . $item->order_id);
