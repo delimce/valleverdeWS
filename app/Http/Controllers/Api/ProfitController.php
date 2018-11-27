@@ -24,6 +24,7 @@ use Carbon\Carbon;
 class ProfitController extends BaseController
 {
     static $SHIPPING_CODE = 'FLETE000000'; ///cod de flete en profit
+    static $SHIPPING_TAX = 1.16; //16%
 
     /**
      * baja las ordenes ya pagadas pendientes pro procesar
@@ -47,16 +48,19 @@ class ProfitController extends BaseController
                 $shipping = null;
                 ///totals
                 $totals = $item->totals()->orderBy('sort_order')->get();
+                $item_shipping = $item->totals()->whereCode('shipping')->first();
+                if ($item_shipping) {
+                    $shipping = array(
+                        "quantity" => 1,
+                        "price" => number_format($item_shipping->value,
+                            2, '.', ''),
+                        "cod" => self::$SHIPPING_CODE);
+                }
+
                 $totals->each(function ($total) use (&$orderDetail, &$shipping) {
-                    if ($total->code == 'shipping') {
-                        $shipping = array(
-                            "quantity" => 1,
-                            "price" => number_format($total->value,
-                                2, '.', ''),
-                            "cod" => self::$SHIPPING_CODE);
-                    }
-                    if ($total->code == 'sub_total') $orderDetail .= number_format($total->value, 2, '.', '') . ';';
-                    if ($total->code == 'tax') $orderDetail .= number_format($total->value, 2, '.', '') . ';';
+                    ///detalle y impuesto y total
+                    if ($total->code == 'sub_total') $orderDetail .= number_format($total->value + $this->getShippingTax($shipping, 'cost'), 2, '.', '') . ';';
+                    if ($total->code == 'tax') $orderDetail .= number_format($total->value + $this->getShippingTax($shipping, 'tax'), 2, '.', '') . ';';
                     if ($total->code == 'total') $orderDetail .= number_format($total->value, 2, '.', '') . ';';
                 });
                 $payment = $item->paymentType();
@@ -67,7 +71,7 @@ class ProfitController extends BaseController
                     $profit = $prod->stock()->first()->cod;
                     if ($profit) { ///el codigo existe en profit
                         print $orderDetail; //order header
-                        print $profit . ';' . $prod->quantity . ';' . number_format($prod->price, 2, '.', '') . ';' . number_format($prod->quantity * $prod->price, 2, '.', '') . ';'; //products detail
+                        print $profit . ';' . $prod->quantity . ';' . number_format($prod->price, 2, '.', '') . ';' . number_format($prod->total, 2, '.', '') . ';'; //products detail
                         print $payment;
                         print "\n";
                     }
@@ -169,6 +173,20 @@ class ProfitController extends BaseController
         }
         DB::commit();
         return response()->json(['status' => 'ok', 'orders' => $success]);
+    }
+
+    /**calculo del impuesto sin iva e iva del impuesto
+     * @param $shiping
+     * @param $type
+     * @return float|int
+     */
+    private function getShippingTax($shiping, $type)
+    {
+        $cost = ($shiping) ? $shiping['price'] : 0;
+        $without_tax = $cost / self::$SHIPPING_TAX;
+        $tax = $cost - $without_tax;
+        return ($type == 'tax') ? $tax : $without_tax;
+
     }
 
 }
