@@ -79,8 +79,9 @@ class ProfitController extends BaseController
 
                 ///revisando si existe item de envio
                 if ($shipping) {
+                    $shipping_cost = $this->getShippingTax($shipping, 'cost');
                     print $orderDetail; //order header
-                    print $shipping['cod'] . ';' . $shipping['quantity'] . ';' . number_format($shipping['price'], 2, '.', '') . ';' . number_format($shipping['quantity'] * $shipping['price'], 2, '.', '') . ';'; //products detail
+                    print $shipping['cod'] . ';' . $shipping['quantity'] . ';' . number_format($shipping_cost, 2, '.', '') . ';' . number_format($shipping['quantity'] * $shipping_cost, 2, '.', '') . ';'; //products detail
                     print $payment;
                     print "\n";
                 }
