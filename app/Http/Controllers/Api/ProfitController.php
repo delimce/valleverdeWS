@@ -109,24 +109,12 @@ class ProfitController extends BaseController
                         print $payment;
                         print "\n";
                     }
-<<<<<<< HEAD
-                });
-
-                ///revisando si existe item de envio
-                if ($shipping) {
-                    $shipping_cost = $this->getShippingTax($shipping, 'cost');
-                    print $orderDetail; //order header
-                    print $shipping['cod'] . ';' . $shipping['quantity'] . ';' . number_format($shipping_cost, 2, '.', '') . ';' . number_format($shipping['quantity'] * $shipping_cost, 2, '.', '') . ';'; //products detail
-                    print $payment;
-                    print "\n";
-=======
 
                 } catch (\Exception $ex) {
                     Log::error("Profit: error obteniendo orden:" . $item->order_id);
                     Log::error($ex->getMessage());
 
                     return true; //continue
->>>>>>> 9cbc2974316513c95314a3bcb39639a5c5d3a502
                 }
 
             }
