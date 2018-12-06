@@ -47,6 +47,7 @@ $router->group(['namespace' => 'Api'], function () use ($router) {
         $router->get('/ordersPaid', 'ProfitController@getOrdersPaid');
         $router->get('/setProcessed/orders/{orders}/docs/{docs}', 'ProfitController@setOrderProcessed');
         $router->get('/unProcessing/orders/{orders}', 'ProfitController@setOrderUnProcessed');
+        $router->post('/stock/stockSync', 'ProfitController@stockSync');
     });
 
     //products
