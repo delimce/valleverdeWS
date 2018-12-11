@@ -11,6 +11,7 @@ namespace App\Http\Controllers\Api;
 use App\Models\Order\Order;
 use App\Models\Order\OrderHistory;
 use App\Models\Order\OrderProduct;
+use App\Models\Product\Stock;
 use Laravel\Lumen\Routing\Controller as BaseController;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Log;
@@ -230,17 +231,43 @@ class ProfitController extends BaseController
     /**
      * @param Request $req
      *syncing profit stock
+     *
      * @return mixed
      */
     public function stockSync(Request $req)
     {
-        $data = $req->json()->all();
+        $data   = $req->json()->all();
+        $resume = ["creados" => 0, "actuailzados" => 0, "errores" => 0];
         try {
             if (count($data) > 0) {
                 ///syncing stock
-                return response()->json(['status' => 'ok', 'stock' => $data]);
-            }else{
-                return response()->json(['status' => 'error', 'message' => "no se ha enviado ningun dato"],400);
+                DB::beginTransaction();
+                array_filter(
+                    $data, function ($item) use (&$resume) {
+                    try {
+                        $myStock = Stock::whereCod($item["co_art"])->first();
+                        if (!empty($myStock)) { //editar inventario
+                            $myStock->quantity = $item["stock_act"];
+                            $myStock->save();
+                            $resume["actuailzados"]++;
+                        } else {
+                            $resume["creados"]++;
+                        }
+
+                    } catch (\ErrorException $er) {
+                        Log::error($er->getMessage());
+                        $resume["errores"]++;
+                        return true; //continue
+                    }
+
+                }
+                );
+
+                DB::commit();
+
+                return response()->json(['status' => 'ok', 'stock' => $resume]);
+            } else {
+                return response()->json(['status' => 'error', 'message' => "no se ha enviado ningun dato"], 400);
             }
         } catch (\Exception $ex) {
             Log::error($ex->getMessage());
