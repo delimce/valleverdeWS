@@ -247,11 +247,36 @@ class ProfitController extends BaseController
                     try {
                         $myStock = Stock::whereCod($item["co_art"])->first();
                         if (!empty($myStock)) { //editar inventario
-                            $myStock->quantity = $item["stock_act"];
-                            $myStock->save();
                             $resume["actuailzados"]++;
+                            $myStock->quantity = $item["stock_act"];
+                            $myStock->desc = $item["art_des"];
+                            $myStock->update = Carbon::now();
+                            $myStock->save();
+                            ////actualizar ficha de producto
+                            $prod = $myStock->getProduct();
+                            if(!empty($prod)){ ///existe el producto
+                                $prod->price = $item["prec_vta1"]; //ultimo precio
+                             ///   $prod->status = status del producto
+                                $prod->save();
+                            }else{
+                                Log::info("NO se encontro el producto con sku:{$myStock->sku}");
+                            }
+
                         } else {
+                            ///creando registro en stock
                             $resume["creados"]++;
+                            $newStock = new Stock();
+                            $newStock->cod = $item["co_art"];
+                            $newStock->desc = $item["art_des"];
+                            $newStock->sku = $item["co_lin"].$item["co_subl"].$item["co_color"].$item["co_cat"];
+                            $newStock->quantity = $item["stock_act"];
+                            $newStock->co_lin = $item["co_lin"];
+                            $newStock->model = $item["co_subl"];
+                            $newStock->color = $item["co_color"];
+                            $newStock->size = $item["co_cat"];
+                            $newStock->update = Carbon::now();
+                            $newStock->save();
+                            ///creando producto
                         }
 
                     } catch (\ErrorException $er) {

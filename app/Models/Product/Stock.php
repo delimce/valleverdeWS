@@ -17,6 +17,11 @@ class Stock extends Model
     public $timestamps = false;
 
 
+    public function getProduct()
+    {
+        $sku = $this->co_lin . $this->model;
+        return Product::whereSku($sku)->first();
+    }
 
 
 }
