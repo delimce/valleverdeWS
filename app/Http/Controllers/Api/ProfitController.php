@@ -236,15 +236,14 @@ class ProfitController extends BaseController
      */
     public function stockSync(Request $req)
     {
-        $data   = $req->json()->all();
-        $resume = ["creados" => 0, "actuailzados" => 0, "errores" => 0];
+        $data     = $req->json()->all();
+        $resume   = ["creados" => 0, "actuailzados" => 0, "errores" => 0];
         try {
             if (count($data) > 0) {
                 ///syncing stock
-                DB::beginTransaction();
                 Log::info("inicio el proceso de sincronizacion de inventario valleverde");
-                Log::info("fecha:".Carbon::now('America/Caracas'));
-                Log::info("total de productos a procesar:".count($data));
+                Log::info("fecha:" . Carbon::now('America/Caracas'));
+                Log::info("total de productos a procesar:" . count($data));
                 array_filter(
                     $data, function ($item) use (&$resume) {
                     try {
@@ -252,32 +251,32 @@ class ProfitController extends BaseController
                         if (!empty($myStock)) { //editar inventario
                             $resume["actuailzados"]++;
                             $myStock->quantity = $item["stock_act"];
-                            $myStock->desc = $item["art_des"];
-                            $myStock->update = Carbon::now('America/Caracas');
+                            $myStock->desc     = $item["art_des"];
+                            $myStock->update   = Carbon::now('America/Caracas');
                             $myStock->save();
                             ////actualizar ficha de producto
                             $prod = $myStock->getProduct();
-                            if(!empty($prod)){ ///existe el producto
+                            if (!empty($prod)) { ///existe el producto
                                 $prod->price = $item["prec_vta1"]; //ultimo precio
-                             ///   $prod->status = status del producto
+                                ///   $prod->status = status del producto
                                 $prod->save();
-                            }else{
+                            } else {
                                 Log::info("NO se encontro el producto con sku:{$myStock->sku}");
                             }
 
                         } else {
                             ///creando registro en stock
                             $resume["creados"]++;
-                            $newStock = new Stock();
-                            $newStock->cod = $item["co_art"];
-                            $newStock->desc = $item["art_des"];
-                            $newStock->sku = $item["co_lin"].$item["co_subl"].$item["co_color"].$item["co_cat"];
+                            $newStock           = new Stock();
+                            $newStock->cod      = $item["co_art"];
+                            $newStock->desc     = $item["art_des"];
+                            $newStock->sku      = $item["co_lin"] . $item["co_subl"] . $item["co_color"] . $item["co_cat"];
                             $newStock->quantity = $item["stock_act"];
-                            $newStock->co_lin = $item["co_lin"];
-                            $newStock->model = $item["co_subl"];
-                            $newStock->color = $item["co_color"];
-                            $newStock->size = $item["co_cat"];
-                            $newStock->update = Carbon::now('America/Caracas');
+                            $newStock->co_lin   = $item["co_lin"];
+                            $newStock->model    = $item["co_subl"];
+                            $newStock->color    = $item["co_color"];
+                            $newStock->size     = $item["co_cat"];
+                            $newStock->update   = Carbon::now('America/Caracas');
                             $newStock->save();
                             ///creando producto
                         }
@@ -290,9 +289,8 @@ class ProfitController extends BaseController
 
                 }
                 );
-
-                DB::commit();
                 Log::info("fin del proceso de sincronizacion");
+                Log::info("actualizados:{$resume['actuailzados']}, nuevos:{$resume['creados']}, errores:{$resume["errores"]}");
 
                 return response()->json(['status' => 'ok', 'stock' => $resume]);
             } else {
