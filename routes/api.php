@@ -54,6 +54,7 @@ $router->group(['namespace' => 'Api'], function () use ($router) {
     $router->group(['prefix' => 'product'], function () use ($router) {
         $router->get('/{productId}', 'StockController@getProduct');
         $router->get('/sku/{sku}', 'StockController@getProductBySku');
+        $router->put('/updateMain', 'StockController@updateProductList');
     });
 
 

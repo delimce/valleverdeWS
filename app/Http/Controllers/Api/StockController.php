@@ -9,6 +9,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\Product\Product;
+use App\Models\Product\Stock;
 use Laravel\Lumen\Routing\Controller as BaseController;
 use Illuminate\Http\Request;
 use Validator;
@@ -23,6 +24,7 @@ class StockController extends BaseController
         return response()->json(['status' => 'ok', 'data' => $product]);
     }
 
+
     public function getProductBySku($sku)
     {
         $product = Product::whereSku($sku)->with('description')->first();
@@ -30,6 +32,14 @@ class StockController extends BaseController
         return response()->json(['status' => 'ok', 'data' => $product]);
     }
 
+
+    public function updateProductList()
+    {
+
+        $products = Stock::getMainProducts();
+        return response()->json(['status' => 'ok', 'data' => $products]);
+
+    }
 
 
 }
