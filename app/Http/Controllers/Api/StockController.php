@@ -12,6 +12,7 @@ use App\Models\Product\Category;
 use App\Models\Product\Product;
 use App\Models\Product\ProductCategory;
 use App\Models\Product\ProductDescription;
+use App\Models\Product\ProductOption;
 use App\Models\Product\Stock;
 use Laravel\Lumen\Routing\Controller as BaseController;
 use Illuminate\Http\Request;
@@ -51,7 +52,7 @@ class StockController extends BaseController
             )->first();
 
             if (empty($myProduct)) { ///se debe crear el producto
-                $this->createProduct($prod);
+                $prod["colors_cod"] = $this->createProduct($prod);
                 $toInsert[] = $prod;
             }
 
@@ -65,7 +66,7 @@ class StockController extends BaseController
     {
         DB::beginTransaction();
         ///product
-        $product                  = new Product();
+     /*   $product                  = new Product();
         $product->sku             = $prod["sku"];
         $product->model           = $prod["desc"];
         $product->image           = $prod["image"];
@@ -87,9 +88,49 @@ class StockController extends BaseController
         $prodCat              = new ProductCategory();
         $prodCat->category_id = $cat->category_id;
         $product->category()->save($prodCat);
+        ///asociar colores y tallas del producto
+
+        $option_color = new ProductOption();
+        $option_color->product_id = $product->product_id;
+        $option_color->option_id = 13;
+        $option_color->value = '';
+        $option_color->required = 1;
+        $option_color->save();
+        $colorId = $option_color->product_option_id; //product_option_id COLOR
+
+        $option_size = new ProductOption();
+        $option_size->product_id = $product->product_id;
+        $option_size->option_id = 14;
+        $option_size->value = '';
+        $option_size->required = 1;
+        $option_size->save();
+        $sizeId = $option_size->product_option_id; //product_option_id TALLA*/
+
+        //colores
+        $colors =  DB::table('oc_option_value')
+            ->select('option_value_id')
+            ->where('option_id',13)
+            ->where('cod_largo',$prod["sku"])
+            ->whereIn('codigo', $prod["colors"])
+            ->get();
+        $colors = $colors->toArray();
+
+
+        ///tallas
+        $sizes =  DB::table('oc_option_value_description')
+            ->select('option_value_id')
+            ->where('option_id',14)
+            ->whereIn('name', $prod["sizes"])
+            ->get();
+        $sizes = $sizes->toArray();
+
 
 
         DB::commit();
+
+
+        return $colors;
+
     }
 
 

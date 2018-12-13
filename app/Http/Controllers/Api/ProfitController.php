@@ -259,6 +259,7 @@ class ProfitController extends BaseController
                             $prod = $myStock->getProduct();
                             if (!empty($prod)) { ///existe el producto
                                 $prod->price = $item["prec_vta1"]; //ultimo precio
+                                $prod->date_modified = Carbon::now('America/Caracas');
                                 ///   $prod->status = status del producto
                                 $prod->save();
                             } else {
