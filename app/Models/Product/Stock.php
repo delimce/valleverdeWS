@@ -39,6 +39,7 @@ class Stock extends Model
                     co_lin,
                     concat(s.co_lin,model) as sku,
                     s.`desc`,
+                    s.price,
                     concat(s.co_lin,s.model,s.color,'.jpg') as image,
                     -- count(*) as total,
                     GROUP_CONCAT(distinct s.color) as colors,
@@ -56,7 +57,8 @@ class Stock extends Model
                 "sku"    => $res->sku,
                 "cat"    => $res->co_lin,
                 "desc"   => self::format_desc($res->desc),
-                "image"  => $res->image,
+                "price"  => $res->price,
+                "image"  => 'catalog/products/' . $res->image,
                 "colors" => explode(",", $res->colors),
                 "sizes"  => explode(",", $res->sizes)
             ];
@@ -73,7 +75,7 @@ class Stock extends Model
     {
         $full  = explode(" ", $desc);
         $final = $full[0] . ' ' . $full[1];
-        $final .= (strtolower($full[2]) != 'en') ? $full[2] : '';
+        $final .= (strtolower($full[2]) != 'en') ? ' ' . $full[2] : '';
 
         return $final;
     }

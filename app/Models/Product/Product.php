@@ -20,6 +20,13 @@ class Product extends Model
         return $this->hasOne('App\Models\Product\ProductDescription', 'product_id','product_id');
     }
 
+    public function category()
+    {
+        return $this->hasMany('App\Models\Product\ProductCategory', 'product_id');
+    }
+
+
+
     protected $visible = ['description','sku','image','quantity','price','price2','price3','price4','tax_class_id','weight','length','width','height','viewed','status'];
 
 }

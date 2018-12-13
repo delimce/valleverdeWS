@@ -236,8 +236,8 @@ class ProfitController extends BaseController
      */
     public function stockSync(Request $req)
     {
-        $data     = $req->json()->all();
-        $resume   = ["creados" => 0, "actuailzados" => 0, "errores" => 0];
+        $data   = $req->json()->all();
+        $resume = ["creados" => 0, "actuailzados" => 0, "errores" => 0];
         try {
             if (count($data) > 0) {
                 ///syncing stock
@@ -251,6 +251,7 @@ class ProfitController extends BaseController
                         if (!empty($myStock)) { //editar inventario
                             $resume["actuailzados"]++;
                             $myStock->quantity = $item["stock_act"];
+                            $myStock->price    = $item["prec_vta1"]; //ultimo precio
                             $myStock->desc     = $item["art_des"];
                             $myStock->update   = Carbon::now('America/Caracas');
                             $myStock->save();
@@ -270,6 +271,7 @@ class ProfitController extends BaseController
                             $newStock           = new Stock();
                             $newStock->cod      = $item["co_art"];
                             $newStock->desc     = $item["art_des"];
+                            $newStock->price    = $item["prec_vta1"]; //ultimo precio
                             $newStock->sku      = $item["co_lin"] . $item["co_subl"] . $item["co_color"] . $item["co_cat"];
                             $newStock->quantity = $item["stock_act"];
                             $newStock->co_lin   = $item["co_lin"];
@@ -284,13 +286,16 @@ class ProfitController extends BaseController
                     } catch (\ErrorException $er) {
                         Log::error($er->getMessage());
                         $resume["errores"]++;
+
                         return true; //continue
                     }
 
                 }
                 );
                 Log::info("fin del proceso de sincronizacion");
-                Log::info("actualizados:{$resume['actuailzados']}, nuevos:{$resume['creados']}, errores:{$resume["errores"]}");
+                Log::info(
+                    "actualizados:{$resume['actuailzados']}, nuevos:{$resume['creados']}, errores:{$resume["errores"]}"
+                );
 
                 return response()->json(['status' => 'ok', 'stock' => $resume]);
             } else {
