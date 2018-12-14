@@ -42,7 +42,8 @@ class Stock extends Model
                     s.price,
                     concat(s.co_lin,s.model,s.color,'.jpg') as image,
                     -- count(*) as total,
-                    GROUP_CONCAT(distinct s.color) as colors,
+                    GROUP_CONCAT(distinct s.color order by c.co_col) as colors,
+                    GROUP_CONCAT(distinct c.col_des order by c.co_col) as colors_desc,
                     GROUP_CONCAT(distinct s.size) as sizes
                     FROM
                     op_stock AS s left join op_color c on s.color = c.co_col
@@ -59,17 +60,24 @@ class Stock extends Model
                 "desc"   => self::format_desc($res->desc),
                 "price"  => $res->price,
                 "image"  => 'catalog/products/' . $res->image,
-                "colors" => explode(",", $res->colors),
+                "colors" => self::merge_arrays(explode(",",$res->colors),explode(",",$res->colors_desc)),
                 "sizes"  => explode(",", $res->sizes)
             ];
             $products[] = $temp;
-
         }
 
         return $products;
-
     }
 
+
+    static function merge_arrays($array1,$array2){
+        $arrayMerged = array();
+        foreach($array1 as $i => $item){
+            $temp = array("cod"=>$item,"desc"=>$array2[$i]);
+            $arrayMerged[] = $temp;
+        }
+        return $arrayMerged;
+    }
 
     static function format_desc($desc)
     {

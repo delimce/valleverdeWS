@@ -241,9 +241,9 @@ class ProfitController extends BaseController
         try {
             if (count($data) > 0) {
                 ///syncing stock
-                Log::info("inicio el proceso de sincronizacion de inventario valleverde");
-                Log::info("fecha:" . Carbon::now('America/Caracas'));
-                Log::info("total de productos a procesar:" . count($data));
+                Log::info("Inicio el proceso de sincronizacion de inventario valleverde");
+                Log::info("Fecha:" . Carbon::now('America/Caracas'));
+                Log::info("Total de productos a procesar:" . count($data));
                 array_filter(
                     $data, function ($item) use (&$resume) {
                     try {
