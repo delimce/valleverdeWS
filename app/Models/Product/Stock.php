@@ -32,37 +32,36 @@ class Stock extends Model
     }
 
 
-    public static function getMainProducts()
+    public static function getMainProducts($availiable = false)
     {
-
-        $query = "SELECT DISTINCT
+        $filter = ($availiable) ? " and s.cancel = 'N'" : ""; ///NO toma en cuenta los productos inactivos
+        $query  = "SELECT DISTINCT
                     stock_id,
                     co_lin,
                     concat(s.co_lin,model) as sku,
                     s.`desc`,
-                    s.price,
+                    max(s.price) as price,
                     sum(s.quantity) as quantity,
                     concat(s.co_lin,s.model,s.color,'.jpg') as image,
-                    -- count(*) as total,
                     GROUP_CONCAT(distinct s.color order by c.co_col) as colors,
                     GROUP_CONCAT(distinct s.size) as sizes
                     FROM
                     op_stock AS s left join op_color c on s.color = c.co_col
-                    where stock_id not in (3398,3399,3395,3396,3401,3397,3400,9528,9529,9530)
+                    where stock_id not in (3398,3399,3395,3396,3401,3397,3400,9528,9529,9530) $filter
                     GROUP BY co_lin,model";
 
         $result   = DB::select(DB::raw($query));
         $products = [];
         foreach ($result as $res) {
             $temp       = [
-                "sku"    => $res->sku,
-                "cat"    => $res->co_lin,
-                "desc"   => self::format_desc($res->desc),
-                "price"  => $res->price,
-                "quantity"  => $res->quantity,
-                "image"  => 'catalog/products/' . $res->image,
-                "colors" => self::merge_arrays(explode(",", $res->colors)),
-                "sizes"  => explode(",", $res->sizes)
+                "sku"      => $res->sku,
+                "cat"      => $res->co_lin,
+                "desc"     => self::format_desc($res->desc),
+                "price"    => $res->price,
+                "quantity" => $res->quantity,
+                "image"    => 'catalog/products/' . $res->image,
+                "colors"   => self::merge_arrays(explode(",", $res->colors)),
+                "sizes"    => explode(",", $res->sizes)
             ];
             $products[] = $temp;
         }

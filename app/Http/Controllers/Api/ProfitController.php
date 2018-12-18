@@ -11,6 +11,7 @@ namespace App\Http\Controllers\Api;
 use App\Models\Order\Order;
 use App\Models\Order\OrderHistory;
 use App\Models\Order\OrderProduct;
+use App\Models\Product\Product;
 use App\Models\Product\Stock;
 use Laravel\Lumen\Routing\Controller as BaseController;
 use GuzzleHttp\Client;
@@ -148,7 +149,7 @@ class ProfitController extends BaseController
                     $history                  = new OrderHistory();
                     $history->order_status_id = 15;
                     $history->notify          = 0;
-                    $history->comment         = 'Facturación Profit, nro factura: '.$docs[$i];
+                    $history->comment         = 'Facturación Profit, nro factura: ' . $docs[$i];
                     $history->date_added      = Carbon::now();
                     $order->history()->save($history);
                     $success[] = ["order" => $order->order_id, "processed" => true];
@@ -254,18 +255,8 @@ class ProfitController extends BaseController
                             $myStock->price    = $item["prec_vta1"]; //ultimo precio
                             $myStock->desc     = $item["art_des"];
                             $myStock->update   = Carbon::now('America/Caracas');
+                            $myStock->cancel   = (intval($item["stock_act"])) ? 'N' : 'S';
                             $myStock->save();
-                            ////actualizar ficha de producto
-                            $prod = $myStock->getProduct();
-                            if (!empty($prod)) { ///existe el producto
-                                $prod->price = $item["prec_vta1"]; //ultimo precio
-                                $prod->date_modified = Carbon::now('America/Caracas');
-                                ///   $prod->status = status del producto
-                                $prod->save();
-                            } else {
-                                Log::info("NO se encontro el producto con sku:{$myStock->sku}");
-                            }
-
                         } else {
                             ///creando registro en stock
                             $resume["creados"]++;
@@ -280,9 +271,26 @@ class ProfitController extends BaseController
                             $newStock->color    = $item["co_color"];
                             $newStock->size     = $item["co_cat"];
                             $newStock->update   = Carbon::now('America/Caracas');
+                            $newStock->cancel   = (intval($item["stock_act"])) ? 'N' : 'S';
                             $newStock->save();
                             ///creando producto
                         }
+
+                        ///Actualizando productos del inventario
+                        $products = Stock::getMainProducts(true);
+                        array_filter(
+                            $products, function ($item) {
+                            $prod = Product::whereSku($item['sku'])->first();
+                            if (!empty($prod)) { ///existe el producto
+                                $prod->price         = $item['price'];
+                                $prod->quantity      = $item['quantity'];
+                                $prod->date_modified = Carbon::now('America/Caracas');
+                                $prod->save();
+                            } else {
+                                Log::info("NO se encontró el producto con sku:{$item['sku']}");
+                            }
+                        }
+                        );
 
                     } catch (\ErrorException $er) {
                         Log::error($er->getMessage());
