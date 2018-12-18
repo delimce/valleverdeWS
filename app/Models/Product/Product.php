@@ -25,6 +25,11 @@ class Product extends Model
         return $this->hasMany('App\Models\Product\ProductCategory', 'product_id');
     }
 
+    public function store()
+    {
+        return $this->hasMany('App\Models\Product\ProductStore', 'product_id');
+    }
+
     public function option()
     {
         return $this->hasMany('App\Models\Product\ProductOption', 'product_id');

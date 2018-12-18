@@ -16,6 +16,7 @@ use App\Models\Product\ProductCategory;
 use App\Models\Product\ProductDescription;
 use App\Models\Product\ProductOption;
 use App\Models\Product\ProductOptionValue;
+use App\Models\Product\ProductStore;
 use App\Models\Product\Stock;
 use Laravel\Lumen\Routing\Controller as BaseController;
 use Illuminate\Http\Request;
@@ -69,33 +70,39 @@ class StockController extends BaseController
     private function createProduct($prod)
     {
         DB::beginTransaction();
-
         try {
             ///product
             $product                  = new Product();
             $product->sku             = $prod["sku"];
             $product->model           = $prod["desc"];
             $product->image           = $prod["image"];
+            $product->price           = $prod["price"];
+            $product->quantity        = $prod["quantity"];
             $product->manufacturer_id = 11;
             $product->shipping        = 1;
             $product->tax_class_id    = 10;
+            $product->date_available  = Carbon::now()->subHours(3);
             $product->date_added      = Carbon::now();
             $product->date_modified   = Carbon::now();
-            $product->status          = 0;
+            $product->status          = 1; ///habilitado
             //todo: dimensiones del producto y peso
             $product->save();
             ///product description
             $description              = new ProductDescription();
             $description->language_id = 2;
             $description->name        = $prod["desc"];
+            $description->meta_title  = $prod["desc"];
             $product->description()->save($description);
             ///product category
             $cat                  = Category::whereCode($prod["cat"])->first();
             $prodCat              = new ProductCategory();
             $prodCat->category_id = $cat->category_id;
             $product->category()->save($prodCat);
+            ///product to store
+            $store           = new ProductStore();
+            $store->store_id = 0;
+            $product->store()->save($store);
             ///asociar colores y tallas del producto
-
             $option_color             = new ProductOption();
             $option_color->product_id = $product->product_id;
             $option_color->option_id  = 13;
@@ -179,7 +186,7 @@ class StockController extends BaseController
 
         } catch (\Exception $e) {
             DB::rollback();
-            Log::error("IError: " . $e->getMessage());
+            Log::error("Error: " . $e->getMessage());
             Log::error("Imposible crear el producto: " . $prod["desc"]);
             // something went wrong
         }
