@@ -148,7 +148,7 @@ class ProfitController extends BaseController
                     $history                  = new OrderHistory();
                     $history->order_status_id = 15;
                     $history->notify          = 0;
-                    $history->comment         = 'facturacion profit';
+                    $history->comment         = 'Facturación Profit, nro factura: '.$docs[$i];
                     $history->date_added      = Carbon::now();
                     $order->history()->save($history);
                     $success[] = ["order" => $order->order_id, "processed" => true];
