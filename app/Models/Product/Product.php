@@ -30,6 +30,11 @@ class Product extends Model
         return $this->hasMany('App\Models\Product\ProductOption', 'product_id');
     }
 
+    public function optionValue()
+    {
+        return $this->hasMany('App\Models\Product\ProductOptionValue', 'product_id');
+    }
+
 
     protected $visible = ['description','sku','image','quantity','price','price2','price3','price4','tax_class_id','weight','length','width','height','viewed','status'];
 

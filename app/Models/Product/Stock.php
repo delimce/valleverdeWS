@@ -11,6 +11,7 @@ namespace App\Models\Product;
 use Illuminate\Database\Eloquent\Model;
 use DB;
 use App\Models\Product\Product;
+use Cache;
 
 class Stock extends Model
 {
@@ -43,7 +44,6 @@ class Stock extends Model
                     concat(s.co_lin,s.model,s.color,'.jpg') as image,
                     -- count(*) as total,
                     GROUP_CONCAT(distinct s.color order by c.co_col) as colors,
-                    GROUP_CONCAT(distinct c.col_des order by c.co_col) as colors_desc,
                     GROUP_CONCAT(distinct s.size) as sizes
                     FROM
                     op_stock AS s left join op_color c on s.color = c.co_col
@@ -52,7 +52,6 @@ class Stock extends Model
 
         $result   = DB::select(DB::raw($query));
         $products = [];
-
         foreach ($result as $res) {
             $temp       = [
                 "sku"    => $res->sku,
@@ -60,7 +59,7 @@ class Stock extends Model
                 "desc"   => self::format_desc($res->desc),
                 "price"  => $res->price,
                 "image"  => 'catalog/products/' . $res->image,
-                "colors" => self::merge_arrays(explode(",",$res->colors),explode(",",$res->colors_desc)),
+                "colors" => self::merge_arrays(explode(",", $res->colors)),
                 "sizes"  => explode(",", $res->sizes)
             ];
             $products[] = $temp;
@@ -70,14 +69,47 @@ class Stock extends Model
     }
 
 
-    static function merge_arrays($array1,$array2){
-        $arrayMerged = array();
-        foreach($array1 as $i => $item){
-            $temp = array("cod"=>$item,"desc"=>$array2[$i]);
+    static function getColors()
+    {
+        $colors = Cache::remember(
+            'stock_colors', 5, function () { ///12 horas de cache
+            $data = DB::table('op_color')->select('co_col', 'col_des')->get();;
+
+            return json_decode($data, true);
+        }
+        );
+
+        return $colors;
+    }
+
+
+    static function merge_arrays($array1)
+    {
+        $arrayMerged = [];
+        $colors      = self::getColors();
+        foreach ($array1 as $i => $item) {
+            $name          = self::find_color_desc($item, $colors);
+            $temp          = ["cod" => $item, "desc" => $name];
             $arrayMerged[] = $temp;
         }
+
         return $arrayMerged;
     }
+
+
+    static function find_color_desc($needle, $array)
+    {
+        $result = false;
+        foreach ($array as $item) {
+            if ($needle == $item["co_col"]) {
+                $result = $item["col_des"];
+                break;
+            }
+        }
+
+        return $result;
+    }
+
 
     static function format_desc($desc)
     {

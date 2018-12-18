@@ -15,12 +15,14 @@ use App\Models\Product\Product;
 use App\Models\Product\ProductCategory;
 use App\Models\Product\ProductDescription;
 use App\Models\Product\ProductOption;
+use App\Models\Product\ProductOptionValue;
 use App\Models\Product\Stock;
 use Laravel\Lumen\Routing\Controller as BaseController;
 use Illuminate\Http\Request;
 use Validator;
 use Carbon\Carbon;
 use DB;
+use Log;
 
 class StockController extends BaseController
 {
@@ -44,7 +46,7 @@ class StockController extends BaseController
     public function updateProductList()
     {
         $products = Stock::getMainProducts();
-        $main = Product::all();
+        $main     = Product::all();
         $toInsert = [];
         foreach ($products as $prod) {
             $myProduct = $main->filter(
@@ -54,7 +56,7 @@ class StockController extends BaseController
             )->first();
 
             if (empty($myProduct)) { ///se debe crear el producto
-             //   $prod["colors_cod"] = $this->createProduct($prod);
+                $this->createProduct($prod);
                 $toInsert[] = $prod;
             }
 
@@ -67,86 +69,120 @@ class StockController extends BaseController
     private function createProduct($prod)
     {
         DB::beginTransaction();
-        ///product
-           $product                  = new Product();
-           $product->sku             = $prod["sku"];
-           $product->model           = $prod["desc"];
-           $product->image           = $prod["image"];
-           $product->manufacturer_id = 11;
-           $product->shipping        = 1;
-           $product->tax_class_id    = 10;
-           $product->date_added      = Carbon::now();
-           $product->date_modified   = Carbon::now();
-           $product->status          = 0;
-           //todo: dimensiones del producto y peso
-           $product->save();
-           ///product description
-           $description              = new ProductDescription();
-           $description->language_id = 2;
-           $description->name        = $prod["desc"];
-           $product->description()->save($description);
-           ///product category
-           $cat                  = Category::whereCode($prod["cat"])->first();
-           $prodCat              = new ProductCategory();
-           $prodCat->category_id = $cat->category_id;
-           $product->category()->save($prodCat);
-           ///asociar colores y tallas del producto
 
-           $option_color = new ProductOption();
-           $option_color->product_id = $product->product_id;
-           $option_color->option_id = 13;
-           $option_color->value = '';
-           $option_color->required = 1;
-           $option_color->save();
-           $colorId = $option_color->product_option_id; //product_option_id COLOR
-
-           $option_size = new ProductOption();
-           $option_size->product_id = $product->product_id;
-           $option_size->option_id = 14;
-           $option_size->value = '';
-           $option_size->required = 1;
-           $option_size->save();
-           $sizeId = $option_size->product_option_id; //product_option_id TALLA
-
-        ///creando colores
-        array_filter($prod["colors"], function ($item) use ($prod,$product) {
-
-            $optionValue = new OptionValue();
-            $optionValue->option_id = 13;
-            $optionValue->image = 'catalog/products/' . $prod['sku'] . $item . '.jpg';
-            $optionValue->codigo = $item;
-            $optionValue->codigo_largo = $prod['sku'];
-            $optionValue->id_produc = $product->product_id;
-            $optionValue->save();
-            $description = new OptionValueDescription();
+        try {
+            ///product
+            $product                  = new Product();
+            $product->sku             = $prod["sku"];
+            $product->model           = $prod["desc"];
+            $product->image           = $prod["image"];
+            $product->manufacturer_id = 11;
+            $product->shipping        = 1;
+            $product->tax_class_id    = 10;
+            $product->date_added      = Carbon::now();
+            $product->date_modified   = Carbon::now();
+            $product->status          = 0;
+            //todo: dimensiones del producto y peso
+            $product->save();
+            ///product description
+            $description              = new ProductDescription();
             $description->language_id = 2;
-            $description->option_id = 13;
-            $description->name = '';
-            $optionValue->description()->save($description);
+            $description->name        = $prod["desc"];
+            $product->description()->save($description);
+            ///product category
+            $cat                  = Category::whereCode($prod["cat"])->first();
+            $prodCat              = new ProductCategory();
+            $prodCat->category_id = $cat->category_id;
+            $product->category()->save($prodCat);
+            ///asociar colores y tallas del producto
 
-        });
+            $option_color             = new ProductOption();
+            $option_color->product_id = $product->product_id;
+            $option_color->option_id  = 13;
+            $option_color->value      = '';
+            $option_color->required   = 1;
+            $option_color->save();
+            $colorId = $option_color->product_option_id; //product_option_id COLOR
+
+            $option_size             = new ProductOption();
+            $option_size->product_id = $product->product_id;
+            $option_size->option_id  = 14;
+            $option_size->value      = '';
+            $option_size->required   = 1;
+            $option_size->save();
+            $sizeId = $option_size->product_option_id; //product_option_id TALLA
+
+            ///creando colores
+            array_filter(
+                $prod["colors"], function ($item) use ($prod, $product) {
+                if ($item['desc']) {
+                    $optionValue            = new OptionValue();
+                    $optionValue->option_id = 13;
+                    $optionValue->image     = 'catalog/products/' . $prod['sku'] . $item['cod'] . '.jpg';
+                    $optionValue->codigo    = $item['cod'];
+                    $optionValue->cod_largo = $prod['sku'];
+                    $optionValue->id_produc = $product->product_id;
+                    $optionValue->save();
+                    $description              = new OptionValueDescription();
+                    $description->language_id = 2;
+                    $description->option_id   = 13;
+                    $description->name        = $item['desc'];
+                    $optionValue->description()->save($description);
+                }
+            }
+            );
 
 
-        //colores
-        $colors = DB::table('oc_option_value')
-            ->select('option_value_id')
-            ->where('option_id', 13)
-            ->where('cod_largo', $prod["sku"])
-            ->whereIn('codigo', $prod["colors"])
-            ->get();
-        $colors = $colors->toArray();
+            //colores
+            $colors = DB::table('oc_option_value')
+                        ->select('option_value_id')
+                        ->where('option_id', 13)
+                        ->where('cod_largo', $prod["sku"])
+                        ->whereIn('codigo', $prod["colors"])
+                        ->get();
+            $colors = $colors->toArray();
 
+            ///tallas
+            $sizes = DB::table('oc_option_value_description')
+                       ->select('option_value_id')
+                       ->where('option_id', 14)
+                       ->whereIn('name', $prod["sizes"])
+                       ->get();
+            $sizes = $sizes->toArray();
 
-        ///tallas
-        $sizes = DB::table('oc_option_value_description')
-            ->select('option_value_id')
-            ->where('option_id', 14)
-            ->whereIn('name', $prod["sizes"])
-            ->get();
-        $sizes = $sizes->toArray();
+            ///creando opciones de productos y tallas
+            $my_colors = [];
+            array_filter(
+                $colors, function ($item) use ($colorId, &$my_colors) {
+                $option_value                    = new ProductOptionValue();
+                $option_value->option_id         = 13;
+                $option_value->quantity          = 100;
+                $option_value->product_option_id = $colorId;
+                $option_value->option_value_id   = $item->option_value_id;
+                $option_value->save();
+            }
+            );
 
+            $my_sizes = [];
+            array_filter(
+                $sizes, function ($item) use ($sizeId, &$my_sizes) {
+                $option_value                    = new ProductOptionValue();
+                $option_value->option_id         = 14;
+                $option_value->quantity          = 100;
+                $option_value->product_option_id = $sizeId;
+                $option_value->option_value_id   = $item->option_value_id;
+                $option_value->save();
+            }
+            );
 
-        DB::commit();
+            DB::commit();
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error("IError: " . $e->getMessage());
+            Log::error("Imposible crear el producto: " . $prod["desc"]);
+            // something went wrong
+        }
 
 
         return $colors;
