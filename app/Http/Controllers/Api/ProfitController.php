@@ -276,31 +276,31 @@ class ProfitController extends BaseController
                             ///creando producto
                         }
 
-                        ///Actualizando productos del inventario
-                        $products = Stock::getMainProducts(true);
-                        array_filter(
-                            $products, function ($item) {
-                            $prod = Product::whereSku($item['sku'])->first();
-                            if (!empty($prod)) { ///existe el producto
-                                $prod->price         = $item['price'];
-                                $prod->quantity      = $item['quantity'];
-                                $prod->date_modified = Carbon::now('America/Caracas');
-                                $prod->save();
-                            } else {
-                                Log::info("NO se encontró el producto con sku:{$item['sku']}");
-                            }
-                        }
-                        );
-
                     } catch (\ErrorException $er) {
                         Log::error($er->getMessage());
                         $resume["errores"]++;
 
                         return true; //continue
                     }
-
                 }
                 );
+
+                ///Actualizando productos del inventario
+                $products = Stock::getMainProducts(true);
+                array_filter(
+                    $products, function ($item) {
+                    $prod = Product::whereSku($item['sku'])->first();
+                    if (!empty($prod)) { ///existe el producto
+                        $prod->price         = $item['price'];
+                        $prod->quantity      = $item['quantity'];
+                        $prod->date_modified = Carbon::now('America/Caracas');
+                        $prod->save();
+                    } else {
+                        Log::info("NO se encontró el producto con sku:{$item['sku']}");
+                    }
+                }
+                );
+
                 Log::info("fin del proceso de sincronizacion");
                 Log::info(
                     "actualizados:{$resume['actuailzados']}, nuevos:{$resume['creados']}, errores:{$resume["errores"]}"
