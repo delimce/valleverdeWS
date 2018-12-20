@@ -57,7 +57,7 @@ class StockController extends BaseController
             )->first();
 
             if (empty($myProduct)) { ///se debe crear el producto
-                $this->createProduct($prod);
+                self::createProduct($prod);
                 $toInsert[] = $prod;
             }
 
@@ -67,7 +67,7 @@ class StockController extends BaseController
     }
 
 
-    private function createProduct($prod)
+    static function createProduct($prod)
     {
         DB::beginTransaction();
         try {
@@ -120,8 +120,7 @@ class StockController extends BaseController
             $sizeId = $option_size->product_option_id; //product_option_id TALLA
 
             ///creando colores
-            array_filter(
-                $prod["colors"], function ($item) use ($prod, $product) {
+            foreach ($prod["colors"] as $item){
                 if ($item['desc']) {
                     $optionValue            = new OptionValue();
                     $optionValue->option_id = 13;
@@ -137,7 +136,6 @@ class StockController extends BaseController
                     $optionValue->description()->save($description);
                 }
             }
-            );
 
 
             //colores
@@ -145,7 +143,6 @@ class StockController extends BaseController
                         ->select('option_value_id')
                         ->where('option_id', 13)
                         ->where('cod_largo', $prod["sku"])
-                        ->whereIn('codigo', $prod["colors"])
                         ->get();
             $colors = $colors->toArray();
 
@@ -158,24 +155,24 @@ class StockController extends BaseController
             $sizes = $sizes->toArray();
 
             ///creando opciones de productos y tallas
-            $my_colors = [];
             array_filter(
-                $colors, function ($item) use ($colorId, &$my_colors) {
+                $colors, function ($item) use ($colorId, $product) {
                 $option_value                    = new ProductOptionValue();
                 $option_value->option_id         = 13;
                 $option_value->quantity          = 100;
+                $option_value->product_id        = $product->product_id;
                 $option_value->product_option_id = $colorId;
                 $option_value->option_value_id   = $item->option_value_id;
                 $option_value->save();
             }
             );
 
-            $my_sizes = [];
             array_filter(
-                $sizes, function ($item) use ($sizeId, &$my_sizes) {
+                $sizes, function ($item) use ($sizeId, $product) {
                 $option_value                    = new ProductOptionValue();
                 $option_value->option_id         = 14;
                 $option_value->quantity          = 100;
+                $option_value->product_id        = $product->product_id;
                 $option_value->product_option_id = $sizeId;
                 $option_value->option_value_id   = $item->option_value_id;
                 $option_value->save();
@@ -190,9 +187,6 @@ class StockController extends BaseController
             Log::error("Imposible crear el producto: " . $prod["desc"]);
             // something went wrong
         }
-
-
-        return $colors;
 
     }
 

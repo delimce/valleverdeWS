@@ -47,7 +47,7 @@ class Stock extends Model
                     GROUP_CONCAT(distinct s.size) as sizes
                     FROM
                     op_stock AS s left join op_color c on s.color = c.co_col
-                    where stock_id not in (3398,3399,3395,3396,3401,3397,3400,9528,9529,9530) $filter
+                    where s.color != '0000' and stock_id not in (3398,3399,3395,3396,3401,3397,3400,9528,9529,9530) $filter
                     GROUP BY co_lin,model";
 
         $result   = DB::select(DB::raw($query));

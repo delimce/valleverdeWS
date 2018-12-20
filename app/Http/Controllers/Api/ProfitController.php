@@ -294,9 +294,16 @@ class ProfitController extends BaseController
                         $prod->price         = $item['price'];
                         $prod->quantity      = $item['quantity'];
                         $prod->date_modified = Carbon::now('America/Caracas');
+                        ///activando o no el producto si tiene cant > 0 y precio > 0
+                        if ($item['price'] > 0 && $item['quantity'] > 0) {
+                            $prod->status = 1;
+                        } else {
+                            $prod->status = 0;
+                        }
                         $prod->save();
                     } else {
                         Log::info("NO se encontró el producto con sku:{$item['sku']}");
+                        StockController::createProduct($prod);
                     }
                 }
                 );
