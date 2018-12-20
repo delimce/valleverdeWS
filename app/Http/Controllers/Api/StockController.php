@@ -85,7 +85,7 @@ class StockController extends BaseController
             $product->date_added      = Carbon::now();
             $product->date_modified   = Carbon::now();
             $product->status          = 1; ///habilitado
-            //todo: dimensiones del producto y peso
+            $product->setDimentions();
             $product->save();
             ///product description
             $description              = new ProductDescription();
