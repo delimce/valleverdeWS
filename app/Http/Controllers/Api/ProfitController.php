@@ -10,9 +10,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\Order\Order;
 use App\Models\Order\OrderHistory;
-use App\Models\Order\OrderProduct;
 use App\Models\Product\Product;
 use App\Models\Product\Stock;
+use App\Models\Setting;
 use Laravel\Lumen\Routing\Controller as BaseController;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Log;
@@ -25,8 +25,18 @@ use Carbon\Carbon;
 
 class ProfitController extends BaseController
 {
-    static $SHIPPING_CODE = 'FLETE000000'; ///cod de flete en profit
-    static $SHIPPING_TAX  = 1.16; //16% todo: buscar valor del iva en config
+    static $SHIPPING_CODE;
+    static $SHIPPING_TAX;
+
+
+    /**
+     * ProfitController constructor.
+     */
+    public function __construct()
+    {
+        self::$SHIPPING_CODE = 'FLETE000000'; ///cod de flete en profit
+        self::$SHIPPING_TAX = Setting::getIvaTaxValue();
+    }
 
 
     /**
@@ -223,7 +233,6 @@ class ProfitController extends BaseController
         $cost        = ($shiping) ? $shiping['price'] : 0;
         $without_tax = $cost / self::$SHIPPING_TAX;
         $tax         = $cost - $without_tax;
-
         return ($type == 'tax') ? $tax : $without_tax;
 
     }
