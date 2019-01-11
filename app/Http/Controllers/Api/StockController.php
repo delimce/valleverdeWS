@@ -77,6 +77,7 @@ class StockController extends BaseController
             $product->model           = $prod["desc"];
             $product->image           = $prod["image"];
             $product->price           = $prod["price"];
+            $product->price2           = $prod["price2"];
             $product->quantity        = $prod["quantity"];
             $product->manufacturer_id = 11;
             $product->shipping        = 1;

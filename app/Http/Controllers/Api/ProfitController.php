@@ -262,6 +262,7 @@ class ProfitController extends BaseController
                             $resume["actuailzados"]++;
                             $myStock->quantity = $item["stock_act"];
                             $myStock->price    = $item["prec_vta1"]; //ultimo precio
+                            $myStock->price2   = $item["prec_mayor"]; //ultimo precio al mayor
                             $myStock->desc     = $item["art_des"];
                             $myStock->update   = Carbon::now('America/Caracas');
                             $myStock->cancel   = (intval($item["stock_act"])) ? 'N' : 'S';
@@ -273,6 +274,7 @@ class ProfitController extends BaseController
                             $newStock->cod      = $item["co_art"];
                             $newStock->desc     = $item["art_des"];
                             $newStock->price    = $item["prec_vta1"]; //ultimo precio
+                            $newStock->price2   = $item["prec_mayor"]; //ultimo precio al mayor
                             $newStock->sku      = $item["co_lin"] . $item["co_subl"] . $item["co_color"] . $item["co_cat"];
                             $newStock->quantity = $item["stock_act"];
                             $newStock->co_lin   = $item["co_lin"];
@@ -301,6 +303,7 @@ class ProfitController extends BaseController
                     $prod = Product::whereSku($item['sku'])->first();
                     if (!empty($prod)) { ///existe el producto
                         $prod->price         = $item['price'];
+                        $prod->price2        = $item['price2'];
                         $prod->quantity      = $item['quantity'];
                         $prod->date_modified = Carbon::now('America/Caracas');
                         ///activando o no el producto si tiene cant > 0 y precio > 0
