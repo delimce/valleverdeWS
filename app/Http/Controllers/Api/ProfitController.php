@@ -35,7 +35,7 @@ class ProfitController extends BaseController
     public function __construct()
     {
         self::$SHIPPING_CODE = 'FLETE000000'; ///cod de flete en profit
-        self::$SHIPPING_TAX = Setting::getIvaTaxValue();
+        self::$SHIPPING_TAX  = Setting::getIvaTaxValue();
     }
 
 
@@ -93,10 +93,11 @@ class ProfitController extends BaseController
                         }
                     );
                     $payment = $item->paymentType();
+                    $type    = $item->type();
                     ///product items
                     $prods = $item->product()->get();
                     $prods->each(
-                        function ($prod) use ($orderDetail, $payment) {
+                        function ($prod) use ($orderDetail, $payment, $type) {
                             ///buscando cod de producto profit
                             $profit = $prod->stock()->first()->cod;
                             if ($profit) { ///el codigo existe en profit
@@ -105,6 +106,7 @@ class ProfitController extends BaseController
                                         $prod->price, 2, '.', ''
                                     ) . ';' . number_format($prod->total, 2, '.', '') . ';'; //products detail
                                 print $payment;
+                                print $type;
                                 print "\n";
                             }
                         }
@@ -119,6 +121,7 @@ class ProfitController extends BaseController
                                 $shipping['quantity'] * $shipping['price'], 2, '.', ''
                             ) . ';'; //products detail
                         print $payment;
+                        print $type;
                         print "\n";
                     }
 
@@ -233,6 +236,7 @@ class ProfitController extends BaseController
         $cost        = ($shiping) ? $shiping['price'] : 0;
         $without_tax = $cost / self::$SHIPPING_TAX;
         $tax         = $cost - $without_tax;
+
         return ($type == 'tax') ? $tax : $without_tax;
 
     }

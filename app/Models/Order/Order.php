@@ -67,4 +67,12 @@ class Order extends Model
 
     }
 
+
+    /**tipo de orden, factura (detal), cotizacion al mayor
+     * @return string
+     */
+    public function type(){
+       return ($this->customer()->first()->customer_group_id==1)?'COT':'FAC';
+    }
+
 }
