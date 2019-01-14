@@ -62,6 +62,9 @@ class Order extends Model
                 $payment = OrderPayment::whereOrderId($this->order_id)->orderby('payment_id', 'DESC')->first();
                 $paymentData .= ($payment->payment_method == 2) ? 'DEPO' : 'TRAN' . ';' . $payment->reference . ';' . $payment->date . ';' . '0134' . ';' . number_format($payment->amount, 2, '.', '') . ';';
                 break;
+            default: //caso de pedidos desde el admin
+                $paymentData .= 'N/A'.';'.'0000'.';2000-01-01'.';'.'000'.';'.'0.00'.';';
+                break;
         }
         return $paymentData;
 
@@ -72,7 +75,7 @@ class Order extends Model
      * @return string
      */
     public function type(){
-       return ($this->customer()->first()->customer_group_id==1)?'COT':'FAC';
+       return ($this->customer()->first()->customer_group_id==1)?'COT;MAY':'FAC;DET';
     }
 
 }

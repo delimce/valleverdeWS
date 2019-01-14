@@ -35,7 +35,7 @@ class ProfitController extends BaseController
     public function __construct()
     {
         self::$SHIPPING_CODE = 'FLETE000000'; ///cod de flete en profit
-        self::$SHIPPING_TAX  = Setting::getIvaTaxValue();
+        self::$SHIPPING_TAX = Setting::getIvaTaxValue();
     }
 
 
@@ -59,18 +59,18 @@ class ProfitController extends BaseController
                     $orderDetail .= $item->customer->firstname . ' ' . $item->customer->lastname . ';';
                     $orderDetail .= $item->paymentAddress() . ';';
                     $orderDetail .= $item->customer->telephone . ';';
-                    $shipping    = null;
+                    $shipping = null;
                     ///totals
-                    $totals        = $item->totals()->orderBy('sort_order')->get();
+                    $totals = $item->totals()->orderBy('sort_order')->get();
                     $item_shipping = $item->totals()->whereCode('shipping')->first();
                     if ($item_shipping) {
                         $shipping = [
                             "quantity" => 1,
-                            "price"    => number_format(
+                            "price" => number_format(
                                 $item_shipping->value,
                                 2, '.', ''
                             ),
-                            "cod"      => self::$SHIPPING_CODE
+                            "cod" => self::$SHIPPING_CODE
                         ];
                     }
 
@@ -93,7 +93,7 @@ class ProfitController extends BaseController
                         }
                     );
                     $payment = $item->paymentType();
-                    $type    = $item->type();
+                    $type = $item->type();
                     ///product items
                     $prods = $item->product()->get();
                     $prods->each(
@@ -126,9 +126,7 @@ class ProfitController extends BaseController
                     }
 
                 } catch (\Exception $ex) {
-                    Log::error("Profit: error obteniendo orden:" . $item->order_id);
-                    Log::error($ex->getMessage());
-
+                    Log::error("Profit: error obteniendo orden:" . $item->order_id, $ex->getTrace());
                     return true; //continue
                 }
 
@@ -148,8 +146,8 @@ class ProfitController extends BaseController
      */
     public function setOrderProcessed($orders, $docs)
     {
-        $orders  = explode(",", $orders);
-        $docs    = explode(",", $docs);
+        $orders = explode(",", $orders);
+        $docs = explode(",", $docs);
         $success = [];
         DB::beginTransaction();
         foreach ($orders as $i => $orderId) {
@@ -157,13 +155,13 @@ class ProfitController extends BaseController
                 $order = Order::whereOrderStatusId(2)->find($orderId);
                 if ($order != null) {
                     $order->order_status_id = 15; //facturada
-                    $order->invoice_no      = $docs[$i]; //nro factura
+                    $order->invoice_no = $docs[$i]; //nro factura
                     $order->save();
-                    $history                  = new OrderHistory();
+                    $history = new OrderHistory();
                     $history->order_status_id = 15;
-                    $history->notify          = 0;
-                    $history->comment         = 'Facturación Profit, nro factura: ' . $docs[$i];
-                    $history->date_added      = Carbon::now();
+                    $history->notify = 0;
+                    $history->comment = 'Facturación Profit, nro factura: ' . $docs[$i];
+                    $history->date_added = Carbon::now();
                     $order->history()->save($history);
                     $success[] = ["order" => $order->order_id, "processed" => true];
                 } else {
@@ -190,7 +188,7 @@ class ProfitController extends BaseController
      */
     public function setOrderUnProcessed($orders)
     {
-        $orders  = explode(",", $orders);
+        $orders = explode(",", $orders);
         $success = [];
         DB::beginTransaction();
         foreach ($orders as $i => $orderId) {
@@ -198,13 +196,13 @@ class ProfitController extends BaseController
                 $order = Order::whereOrderStatusId(15)->find($orderId);
                 if ($order != null) {
                     $order->order_status_id = 2; //facturada
-                    $order->invoice_no      = ''; //nro factura
+                    $order->invoice_no = ''; //nro factura
                     $order->save();
-                    $history                  = new OrderHistory();
+                    $history = new OrderHistory();
                     $history->order_status_id = 2;
-                    $history->notify          = 0;
-                    $history->comment         = 'restaurando factura profit';
-                    $history->date_added      = Carbon::now();
+                    $history->notify = 0;
+                    $history->comment = 'restaurando factura profit';
+                    $history->date_added = Carbon::now();
                     $order->history()->save($history);
                     $success[] = ["order" => $order->order_id, "unprocessed" => true];
                 } else {
@@ -233,9 +231,9 @@ class ProfitController extends BaseController
      */
     private function getShippingTax($shiping, $type)
     {
-        $cost        = ($shiping) ? $shiping['price'] : 0;
+        $cost = ($shiping) ? $shiping['price'] : 0;
         $without_tax = $cost / self::$SHIPPING_TAX;
-        $tax         = $cost - $without_tax;
+        $tax = $cost - $without_tax;
 
         return ($type == 'tax') ? $tax : $without_tax;
 
@@ -250,7 +248,7 @@ class ProfitController extends BaseController
      */
     public function stockSync(Request $req)
     {
-        $data   = $req->json()->all();
+        $data = $req->json()->all();
         $resume = ["creados" => 0, "actuailzados" => 0, "errores" => 0];
         try {
             if (count($data) > 0) {
@@ -265,28 +263,28 @@ class ProfitController extends BaseController
                         if (!empty($myStock)) { //editar inventario
                             $resume["actuailzados"]++;
                             $myStock->quantity = $item["stock_act"];
-                            $myStock->price    = $item["prec_vta1"]; //ultimo precio
-                            $myStock->price2   = $item["prec_mayor"]; //ultimo precio al mayor
-                            $myStock->desc     = $item["art_des"];
-                            $myStock->update   = Carbon::now('America/Caracas');
-                            $myStock->cancel   = (intval($item["stock_act"])) ? 'N' : 'S';
+                            $myStock->price = $item["prec_vta1"]; //ultimo precio
+                            $myStock->price2 = $item["prec_mayor"]; //ultimo precio al mayor
+                            $myStock->desc = $item["art_des"];
+                            $myStock->update = Carbon::now('America/Caracas');
+                            $myStock->cancel = (intval($item["stock_act"])) ? 'N' : 'S';
                             $myStock->save();
                         } else {
                             ///creando registro en stock
                             $resume["creados"]++;
-                            $newStock           = new Stock();
-                            $newStock->cod      = $item["co_art"];
-                            $newStock->desc     = $item["art_des"];
-                            $newStock->price    = $item["prec_vta1"]; //ultimo precio
-                            $newStock->price2   = $item["prec_mayor"]; //ultimo precio al mayor
-                            $newStock->sku      = $item["co_lin"] . $item["co_subl"] . $item["co_color"] . $item["co_cat"];
+                            $newStock = new Stock();
+                            $newStock->cod = $item["co_art"];
+                            $newStock->desc = $item["art_des"];
+                            $newStock->price = $item["prec_vta1"]; //ultimo precio
+                            $newStock->price2 = $item["prec_mayor"]; //ultimo precio al mayor
+                            $newStock->sku = $item["co_lin"] . $item["co_subl"] . $item["co_color"] . $item["co_cat"];
                             $newStock->quantity = $item["stock_act"];
-                            $newStock->co_lin   = $item["co_lin"];
-                            $newStock->model    = $item["co_subl"];
-                            $newStock->color    = $item["co_color"];
-                            $newStock->size     = $item["co_cat"];
-                            $newStock->update   = Carbon::now('America/Caracas');
-                            $newStock->cancel   = (intval($item["stock_act"])) ? 'N' : 'S';
+                            $newStock->co_lin = $item["co_lin"];
+                            $newStock->model = $item["co_subl"];
+                            $newStock->color = $item["co_color"];
+                            $newStock->size = $item["co_cat"];
+                            $newStock->update = Carbon::now('America/Caracas');
+                            $newStock->cancel = (intval($item["stock_act"])) ? 'N' : 'S';
                             $newStock->save();
                             ///creando producto
                         }
@@ -306,9 +304,9 @@ class ProfitController extends BaseController
                     $products, function ($item) {
                     $prod = Product::whereSku($item['sku'])->first();
                     if (!empty($prod)) { ///existe el producto
-                        $prod->price         = $item['price'];
-                        $prod->price2        = $item['price2'];
-                        $prod->quantity      = $item['quantity'];
+                        $prod->price = $item['price'];
+                        $prod->price2 = $item['price2'];
+                        $prod->quantity = $item['quantity'];
                         $prod->date_modified = Carbon::now('America/Caracas');
                         ///activando o no el producto si tiene cant > 0 y precio > 0
                         if ($item['price'] > 0 && $item['quantity'] > 0) {
