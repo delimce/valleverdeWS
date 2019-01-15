@@ -62,16 +62,20 @@ class ProfitController extends BaseController
                     $shipping = null;
                     ///totals
                     $totals = $item->totals()->orderBy('sort_order')->get();
-                    $item_shipping = $item->totals()->whereCode('shipping')->first();
-                    if ($item_shipping) {
-                        $shipping = [
-                            "quantity" => 1,
-                            "price" => number_format(
-                                $item_shipping->value,
-                                2, '.', ''
-                            ),
-                            "cod" => self::$SHIPPING_CODE
-                        ];
+                    ///registrando item de envio si este no es gratis en la orden
+                    if($item->shipping_code!='free.free'){
+                        $item_shipping = $item->totals()->whereCode('shipping')->first();
+                        if ($item_shipping) {
+                            $shipping = [
+                                "quantity" => 1,
+                                "price" => number_format(
+                                    $item_shipping->value,
+                                    2, '.', ''
+                                ),
+                                "cod" => self::$SHIPPING_CODE
+                            ];
+                        }
+
                     }
 
                     $totals->each(
