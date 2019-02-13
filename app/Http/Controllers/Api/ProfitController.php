@@ -270,6 +270,10 @@ class ProfitController extends BaseController
                 Log::info("Inicio el proceso de sincronizacion de inventario valleverde");
                 Log::info("Fecha:" . Carbon::now('America/Caracas'));
                 Log::info("Total de productos a procesar:" . count($data));
+
+                ///llevando a 0 todas las cantidades
+                DB::table('op_stock')->update(['quantity' => 0]);
+
                 array_filter(
                     $data, function ($item) use (&$resume) {
                     try {
