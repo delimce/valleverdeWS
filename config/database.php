@@ -32,6 +32,17 @@ return [
    */
     'connections' => [
 
+        'wholesale' => [
+            'driver' => 'mysql',
+            'host' => env('DB_HOST_WS'),
+            'database' => env('DB_DATABASE_WS'),
+            'username' => env('DB_USERNAME_WS'),
+            'password' => env('DB_PASSWORD_WS'),
+            'charset' => 'utf8',
+            'collation' => 'utf8_unicode_ci',
+            'prefix' => '',
+            'strict' => false,
+        ],
 
         'tienda_online' => [
             'driver' => 'mysql',
