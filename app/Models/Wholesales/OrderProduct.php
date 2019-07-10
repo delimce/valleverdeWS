@@ -39,7 +39,6 @@ class OrderProduct extends Model
     {
         $details = [];
         $sizes = $this->getSizes();
-        $code = $this->getCode();
         foreach ($sizes as $key => $cant) {
             $pre_key = explode("_", $key);
             $price_unit = number_format(
@@ -48,8 +47,8 @@ class OrderProduct extends Model
             $price_total = number_format(
                 $this->pvp * $cant, 2, '.', ''
             );
-            ///code;cant;price unit;price total;
-            $details[] = $this->getCode() . $pre_key[1] . ';' . $cant . ';' . $price_unit . ';' . $price_total;
+            ///type;code;cant;price unit;price total;
+            $details[] = $this->tipo_prod.';'. $this->getCode() . $pre_key[1] . ';' . $cant . ';' . $price_unit . ';' . $price_total;
         }
         return $details;
     }

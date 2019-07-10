@@ -11,7 +11,7 @@ class Order extends Model
 
     protected $connection = 'wholesale';
     protected $table = "carrito";
-    protected $primaryKey = 'co_ven';
+    protected $primaryKey = 'cart_id';
 
     public $timestamps = false;
 

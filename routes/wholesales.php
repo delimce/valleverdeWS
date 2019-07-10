@@ -18,10 +18,8 @@ $router->group(['prefix' => 'wholesales', 'namespace' => 'Api'], function () use
     //profit services
     $router->group(['prefix' => 'profit'], function () use ($router) {
         $router->get('/ordersStock', 'WholesalesController@getOrdersStock');
+        $router->get('/setProcessed/orders/{orders}', 'WholesalesController@setOrderProcessed');
     });
-
-
-
 
 
     
