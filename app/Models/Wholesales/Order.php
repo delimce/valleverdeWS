@@ -18,7 +18,7 @@ class Order extends Model
     ///foreing key
     public function salesman()
     {
-        return $this->belongsTo('App\Models\Wholesales\Salesman', 'co_ven', 'co_ven');
+        return $this->belongsTo('App\Models\Wholesales\Salesman', 'co_ven_ref', 'co_ven');
     }
 
     ///foreing key
