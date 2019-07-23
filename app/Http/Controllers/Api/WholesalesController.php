@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\Wholesales\Customer;
 use App\Models\Wholesales\Order;
+use App\Models\Wholesales\OrderProduct;
 use App\Models\Wholesales\Sync;
 use Laravel\Lumen\Routing\Controller as BaseController;
 use Illuminate\Support\Facades\Log;
@@ -43,7 +44,7 @@ class WholesalesController extends BaseController
                     ///products details
                     $prods = $item->product()->get();
                     $prods->each(
-                        function ($prod) use ($orderDetail) {
+                        function (OrderProduct $prod) use ($orderDetail) {
                             $details = $prod->getProductsDetails();
                             array_walk($details, function ($item) use ($orderDetail) {
                                 print $orderDetail;

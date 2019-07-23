@@ -16,7 +16,8 @@ class OrderProduct extends Model
 
     protected $connection = 'wholesale';
     protected $table = "carrito_producto";
-    protected $primaryKey = 'codigobarra';
+    protected $primaryKey = ['f_cart_id', 'renglon'];
+    public $incrementing = false;
     public $timestamps = false;
 
     ///foreing key
@@ -48,7 +49,8 @@ class OrderProduct extends Model
                 $this->pvp * $cant, 2, '.', ''
             );
             ///type;code;cant;price unit;price total;
-            $details[] = $this->tipo_prod.';'. $this->getCode() . $pre_key[1] . ';' . $cant . ';' . $price_unit . ';' . $price_total;
+            $details[] = $this->tipo_prod . ';' . $this->getCode() . $pre_key[1] . ';'
+                . $cant . ';' . $price_unit . ';' . $price_total . ';' . $this->codigobarra;
         }
         return $details;
     }
