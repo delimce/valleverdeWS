@@ -6,11 +6,11 @@ use App\Models\Wholesales\Customer;
 use App\Models\Wholesales\Order;
 use App\Models\Wholesales\Sync;
 use Laravel\Lumen\Routing\Controller as BaseController;
+use Illuminate\Support\Facades\Log;
 use DB;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Validator;
-use Log;
 
 class WholesalesController extends BaseController
 {
@@ -21,7 +21,7 @@ class WholesalesController extends BaseController
         return $all;
     }
 
-    public function getOrdersStock()
+    public function getWholesalesOrders()
     {
         //ordenes sin sincronizarse al mayor
         $orders = Order::whereSync(0)->with(['product', 'customer', 'salesman'])->get();
@@ -36,13 +36,16 @@ class WholesalesController extends BaseController
                     $orderDetail .= strtoupper(ProfitController::transliterateString($item->customer->direc)) . ';';
                     $orderDetail .= $item->customer->telef . ';';
                     $shipping = null;
+                    ///salesman code
+                    $salesman_code = (empty($item->co_ven_ref) or is_null($item->co_ven_ref))? '001':$item->co_ven_ref;
+                    $orderDetail.=$salesman_code.';';
 
                     ///products details
                     $prods = $item->product()->get();
                     $prods->each(
                         function ($prod) use ($orderDetail) {
                             $details = $prod->getProductsDetails();
-                            array_walk($details, function ($item) use($orderDetail){
+                            array_walk($details, function ($item) use ($orderDetail) {
                                 print $orderDetail;
                                 print $item;
                                 print "\n";
@@ -72,11 +75,11 @@ class WholesalesController extends BaseController
         DB::beginTransaction();
         foreach ($orders as $orderId) {
             try {
-                $order = Order::find($orderId);
+                $order = Order::WhereSync(0)->find($orderId);
                 if ($order != null) {
                     $order->sync = 1; //synchronized
                     $order->save();
-                     $success[] = ["order" => $order->cart_id, "processed" => true];
+                    $success[] = ["order" => $order->cart_id, "processed" => true];
                 } else {
                     $success[] = ["order" => $orderId, "processed" => false];
                     continue;
@@ -88,16 +91,28 @@ class WholesalesController extends BaseController
                 continue; //continue
             }
         }
-
         ///save sync log
         $sync->co_date_end = Carbon::now();
         $sync->save();
-
         DB::commit();
 
         return response()->json(['status' => 'ok', 'orders' => $success]);
+    }
 
+    /**sync wholesales order by stock (COMBOS)
+     * @param Request $req
+     */
+    public function syncStockOrders(Request $req)
+    {
+        $data = $req->json()->all();
+        $resume = ["creados" => 0, "errores" => 0];
+        if(count($data)>0){
+            ///syncing stock orders
+            Log::info("Inicio el proceso de sincronizacion de ordenes al mayor valleverde");
+            Log::info("Fecha:" . Carbon::now('America/Caracas'));
+            Log::info("Total de ordenes a procesar:" . count($data));
 
+        }
     }
 
 }
